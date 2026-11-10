@@ -68,6 +68,13 @@ main{max-width:760px;margin:0 auto;padding-block:44px 140px}
 .hero{display:grid;gap:18px;padding-top:10px}
 .hero .script-big{font-family:var(--script);font-size:clamp(56px,11vw,92px);color:var(--accent-ink);line-height:.85}
 .hero h1{font-size:clamp(30px,5.6vw,46px);font-weight:700;line-height:1.08;letter-spacing:-.01em}
+.hero-photo{margin:0;border-radius:24px;overflow:hidden;aspect-ratio:4/3;background:#0A141A;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.hero-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;display:block}
+@media(min-width:800px){.hero-photo{aspect-ratio:16/9}}
+.cta-photo{width:96px;height:96px;border-radius:50%;object-fit:cover;object-position:50% 18%;border:3px solid #F9AD84;position:relative;z-index:1}
+.proud{display:grid;gap:14px}
+.proud p{margin:0}
+.proud b{display:block;font-family:var(--display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
 .hero-meta{display:flex;flex-wrap:wrap;gap:10px 22px;color:var(--muted);font-size:15px}
 .hero-meta span{display:inline-flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block}
@@ -249,7 +256,11 @@ const CONFIG = {
   endpoint: "https://script.google.com/macros/s/AKfycbwkEZrJOP0qZ5VrlsRNIR5H25qvxxd4T0yTyp9bV4XKA1KKJflTAM1HJsL1REouxhnCjA/exec",
   bookUrl: "https://calendar.app.google/pNYroKV1cYxonisL9",
   applyUrl: "https://www.abetterplaceconsulting.com/defy-application",
-  source: "DEFY Friendsgiving 2026"
+  source: "DEFY Friendsgiving 2026",
+  // Friendsgiving questions. Set to false after Nov 10 to take them off.
+  friendsgiving: true,
+  photoHero: "bunny-pier.jpg",
+  photoPlan: "bunny-sunset.jpg"
 };
 
 const QUOTES = [
@@ -269,9 +280,10 @@ const S = {
   name:"", goal:null, goalOther:"", hours:null, hoursOther:"",
   work:null, workOther:"", coach:null, offer:null, offerOther:"", offerOtherPrice:"",
   attract:[], attractOther:"", nurture:[], nurtureOther:"", convert:null, convertOther:"",
+  invitedBy:"", proudSelf:"", proudHer:"",
   email:"", completed:false
 };
-const STEPS = ["welcome","goal","hours","work","coach","offers","attract","nurture","convert","plan"];
+const STEPS = ["welcome", ...(CONFIG.friendsgiving? ["friends"]:[]), "goal","hours","work","coach","offers","attract","nurture","convert","plan"];
 let step = 0, qi = 0, celebratedOffers = false;
 
 const $ = s => document.querySelector(s);
@@ -378,12 +390,23 @@ const hi = () => firstName() ? `, ${esc(firstName())}` : "";
 const SCREENS = {
   welcome(){
     return `<section class="screen hero">
+      ${CONFIG.photoHero?`<figure class="hero-photo"><img src="${CONFIG.photoHero}" alt="Bunny Young at the beach"></figure>`:""}
       <span class="eyebrow">DEFY Friendsgiving</span>
       <span class="script-big">Your Best Year Ever</span>
       <h1>Build your 2027 business plan in about three minutes.</h1>
       <p class="sub">Tell me what you want to make and how much you want to work. I'll show you three ways to get there, you pick the one that feels like you, and we'll build the plan together.</p>
-      <div class="hero-meta"><span><i class="dot"></i>8 quick questions</span><span><i class="dot"></i>Your plan at the end</span><span><i class="dot"></i>Yours to keep</span></div>
+      <div class="hero-meta"><span><i class="dot"></i>${CONFIG.friendsgiving?9:8} quick questions</span><span><i class="dot"></i>Your plan at the end</span><span><i class="dot"></i>Yours to keep</span></div>
       <div class="field" style="margin-top:6px"><label for="nm">What should I call you?</label><input class="input" id="nm" autocomplete="given-name" placeholder="First name" value="${esc(S.name)}"></div>
+    </section>`;
+  },
+  friends(){
+    return `<section class="screen">
+      <span class="eyebrow">Happy Friendsgiving</span>
+      <h2 class="q">Before we plan, let's celebrate you${hi()}.</h2>
+      <p class="sub">Three quick ones, just for tonight.</p>
+      <div class="field"><label for="invitedBy">Who invited you today?</label><input class="input" id="invitedBy" autocomplete="off" placeholder="Her name" value="${esc(S.invitedBy)}"></div>
+      <div class="field"><label for="proudSelf">What's one thing you're proud of yourself for?</label><textarea class="input" id="proudSelf" placeholder="This year I...">${esc(S.proudSelf)}</textarea></div>
+      <div class="field"><label for="proudHer">What's one thing you're proud of the woman who invited you for?</label><textarea class="input" id="proudHer" placeholder="I'm so proud of her for...">${esc(S.proudHer)}</textarea></div>
     </section>`;
   },
   goal(){
@@ -517,6 +540,7 @@ const SCREENS = {
           <div class="month"><span class="m">Month 3</span><div><h4>Stay close and invite</h4><ul>${nc.length? nc.map(x=>`<li>${esc(x)}.</li>`).join("") : "<li>Stay in touch with everyone you met in Month 2.</li>"}<li>Invite ${perMonthSales? `at least ${perMonthSales*3} people a month to ${esc(cvDo)}, so ${perMonthSales} of them can say yes`:"people to say yes every month"}.</li></ul></div></div>
         </div>
       </div>
+      ${S.proudSelf.trim()?`<div class="card proud"><h3>Tonight you celebrated</h3><p><b>You're proud of yourself for</b>${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p><b>You're proud of ${esc(S.invitedBy.trim()||"her")} for</b>${esc(S.proudHer.trim())}</p>`:""}</div>`:""}
       <blockquote class="pq" style="margin:0"><q>${esc(q.q)}</q><cite>${esc(q.c)}</cite></blockquote>
       <div class="card">
         <h3>Keep your plan</h3>
@@ -528,6 +552,7 @@ const SCREENS = {
         <div class="row"><button class="btn btn-ghost" type="button" id="dlBtn">Download plan</button><button class="btn btn-ghost" type="button" id="cpBtn">Copy plan</button></div>
       </div>
       <div class="cta">
+        ${CONFIG.photoPlan?`<img class="cta-photo" src="${CONFIG.photoPlan}" alt="Bunny Young">`:""}
         <span class="script">Want help building it?</span>
         <p>This is the exact work we do inside DEFY. Book a call with Bunny and bring this plan with you.</p>
         <div class="row"><a class="btn btn-teal" href="${CONFIG.bookUrl}" target="_blank" rel="noopener">Book my DEFY call</a></div>
@@ -543,6 +568,7 @@ const SCREENS = {
 function valid(){
   switch(STEPS[step]){
     case "welcome": return true;
+    case "friends": return S.invitedBy.trim().length>1 && S.proudSelf.trim().length>1 && S.proudHer.trim().length>1;
     case "goal": return S.goal && (S.goal!=="other" || goalNum()>=1000);
     case "hours": return S.hours && (S.hours!=="other" || (hoursNum()>0 && hoursNum()<=80));
     case "work": return S.work && (S.work!=="other" || S.workOther.trim().length>1);
@@ -554,7 +580,7 @@ function valid(){
     default: return true;
   }
 }
-const HINTS = {goal:"Pick one", hours:"Pick one", work:"Pick one", coach:"Pick one", offers:"Tap the one that fits", attract:"Up to three", nurture:"Pick as many as you like", convert:"Pick one"};
+const HINTS = {friends:"Answer all three", goal:"Pick one", hours:"Pick one", work:"Pick one", coach:"Pick one", offers:"Tap the one that fits", attract:"Up to three", nurture:"Pick as many as you like", convert:"Pick one"};
 
 /* ===== Progress (weighted so it runs ahead) ===== */
 function progress(){
@@ -583,11 +609,11 @@ function updateNext(){ $("#nextBtn").disabled = !valid(); }
 
 function bind(){
   main.querySelectorAll("[data-group]").forEach(b => b.addEventListener("click", () => choose(b.dataset.group, b.dataset.v)));
-  const map = {nm:"name", goalOther:"goalOther", hoursOther:"hoursOther", workOther:"workOther", offerOther:"offerOther", offerOtherPrice:"offerOtherPrice", attractOther:"attractOther", nurtureOther:"nurtureOther", convertOther:"convertOther"};
+  const map = {nm:"name", invitedBy:"invitedBy", proudSelf:"proudSelf", proudHer:"proudHer", goalOther:"goalOther", hoursOther:"hoursOther", workOther:"workOther", offerOther:"offerOther", offerOtherPrice:"offerOtherPrice", attractOther:"attractOther", nurtureOther:"nurtureOther", convertOther:"convertOther"};
   Object.entries(map).forEach(([id,key]) => {
     const el = document.getElementById(id); if(!el) return;
     el.addEventListener("input", () => { S[key] = el.value; updateNext(); });
-    el.addEventListener("keydown", e => { if(e.key==="Enter" && !$("#nextBtn").disabled){ e.preventDefault(); next(); } });
+    el.addEventListener("keydown", e => { if(e.key==="Enter" && el.tagName!=="TEXTAREA" && !$("#nextBtn").disabled){ e.preventDefault(); next(); } });
   });
   if(STEPS[step]==="welcome"){ const n = document.getElementById("nm"); if(n && matchMedia("(min-width:800px)").matches) n.focus({preventScroll:true}); }
 }
@@ -681,6 +707,9 @@ function planText(){
     `Attract: ${S.attract.map(LABEL.attract).join("; ")}`,
     `Nurture: ${S.nurture.map(LABEL.nurture).join("; ")}`,
     `Convert: ${LABEL.convert(S.convert)}`,
+    S.proudSelf.trim()? "" : null,
+    S.proudSelf.trim()? `I'm proud of myself for: ${S.proudSelf.trim()}` : null,
+    S.proudHer.trim()? `I'm proud of ${S.invitedBy.trim()||"the woman who invited me"} for: ${S.proudHer.trim()}` : null,
     "",
     "Month 1: Name it and price it. Block my hours first. Set up how people say yes.",
     "Month 2: Get in front of people every week.",
@@ -689,7 +718,7 @@ function planText(){
     `Book a DEFY call: ${CONFIG.bookUrl}`,
     "These numbers are planning math, not a promise of income or results."
   ];
-  return lines.filter((l,i,arr)=> !(l==="" && arr[i-1]==="")).join("\n");
+  return lines.filter(l=>l!==null).filter((l,i,arr)=> !(l==="" && arr[i-1]==="")).join("\n");
 }
 function payload(event){
   const c = chosen();
@@ -700,6 +729,7 @@ function payload(event){
     coach:COACH.find(x=>x.v===S.coach)?.t || "",
     offer:c.name, offerPrice:c.price, offerPriceNote:c.priceNote, clientsNeeded:c.count,
     attract:S.attract.map(LABEL.attract).join("; "), nurture:S.nurture.map(LABEL.nurture).join("; "), convert:LABEL.convert(S.convert),
+    invitedBy:S.invitedBy.trim(), proudSelf:S.proudSelf.trim(), proudHer:S.proudHer.trim(),
     planText:planText()
   };
 }

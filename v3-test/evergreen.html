@@ -937,7 +937,7 @@ async function downloadPlan(){
     const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${fname}</title><base href="${location.href}"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=DM+Sans:wght@400;500;700&family=Allura&family=Cormorant+Garamond:ital,wght@1,500&display=swap"></head><body style="margin:0;background:#F3F3EE;display:flex;justify-content:center;padding:24px">${planDocHTML()}</body></html>`;
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([html],{type:"text/html"}));
     a.download = fname+".html"; document.body.appendChild(a); a.click(); a.remove();
-    toast("Your plan is downloading");
+    toast("Your plan is downloading as a page");
   }
 }
 function planReady(){

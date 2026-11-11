@@ -197,6 +197,47 @@ textarea.input{min-height:96px;resize:vertical}
 .note{font-size:14px;color:var(--muted)}
 .note.ok{color:var(--teal-ink)}
 .restart{justify-self:start}
+/* Photos */
+.plan-hero{grid-template-columns:minmax(0,1fr)}
+.plan-hero.has-photo{grid-template-columns:minmax(0,1fr) 220px;align-items:center;gap:22px}
+.plan-photo{margin:0;border-radius:22px;overflow:hidden;aspect-ratio:4/5;background:#0A141A;box-shadow:0 18px 40px rgba(0,0,0,.25);transform:rotate(2deg)}
+.plan-photo img{width:100%;height:100%;object-fit:cover;object-position:40% 20%;display:block}
+.bnote{display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px;align-items:start;background:var(--surface-2);border-radius:18px;padding:14px 16px}
+.bnote img{width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:50% 25%;border:2px solid var(--peach)}
+.bnote b{display:block;font-family:var(--display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:2px}
+.bnote p{font-size:15.5px;line-height:1.5}
+.lq-photo{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--peach)}
+/* Ideal week */
+.wk-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.wk-legend button{display:flex;gap:10px;align-items:center;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer;text-align:left;font-size:14px;min-width:0;line-height:1.25}
+.wk-legend button[aria-pressed="true"]{border-color:var(--accent-ink);box-shadow:0 0 0 3px var(--sel)}
+.wk-legend i{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-style:normal;font-family:var(--display);font-weight:800;font-size:12px}
+.wk-legend em{font-style:normal;margin-left:auto;font-family:var(--display);font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.wkgrid{display:grid;grid-template-columns:62px repeat(7,minmax(0,1fr));gap:5px}
+.wkgrid .h{font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.1em;text-align:center;color:var(--muted);padding:2px 0}
+.wkgrid .rl{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center}
+.cell{height:44px;border-radius:10px;border:1.5px dashed var(--line);background:none;cursor:pointer;font-family:var(--display);font-weight:800;font-size:13px;transition:transform .12s;padding:0;min-width:0}
+.cell:active{transform:scale(.92)}
+.cell[data-c]{border-style:solid;border-color:transparent}
+.c-L{background:#273945;color:#F3F3EE;border:1.5px solid rgba(243,243,238,.22)!important}
+.c-C{background:#88CCC6;color:#14262C}
+.c-A{background:#F9AD84;color:#3A1E12}
+.c-N{background:#D9E9E4;color:#273945}
+.c-S{background:#D85A30;color:#fff}
+.c-P{background:#F3F3EE;color:#273945;border:1.5px solid rgba(39,57,69,.25)!important}
+.c-O{background:none;border:1.5px dashed var(--muted)!important}
+.wk-sum{display:grid;gap:6px;font-size:15px}
+.wk-sum div{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px}
+.wk-sum b{font-family:var(--display);font-size:13px;letter-spacing:.08em;color:var(--accent-ink)}
+.wk-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.linkbtn{background:none;border:0;padding:6px 0;color:var(--teal-ink);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@media (max-width:640px){
+  .plan-hero.has-photo{grid-template-columns:minmax(0,1fr) 120px;gap:14px}
+  .wk-legend{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .wkgrid{grid-template-columns:44px repeat(7,minmax(0,1fr));gap:4px}
+  .wkgrid .rl{font-size:9px;letter-spacing:.02em}
+  .cell{height:38px;border-radius:8px;font-size:12px}
+}
 
 @media (max-width:640px){
   main{padding-block:28px 140px}
@@ -243,6 +284,7 @@ textarea.input{min-height:96px;resize:vertical}
 <div class="loader" id="loader" aria-hidden="true">
   <div class="loader-card">
     <div class="lbl"><span class="spin"></span><span id="loaderLbl">Building your next step</span></div>
+    <img class="lq-photo" id="lqPhoto" alt="" hidden>
     <blockquote class="lq" style="margin:0"><q id="lqText"></q><cite id="lqCite"></cite></blockquote>
   </div>
 </div>
@@ -260,7 +302,10 @@ const CONFIG = {
   // Friendsgiving questions. Set to false after Nov 10 to take them off.
   friendsgiving: true,
   photoHero: "bunny-pier.jpg",
-  photoPlan: "bunny-sunset.jpg"
+  photoPlan: "bunny-sunset.jpg",
+  photoYes: "bunny-yes.jpg",
+  photoCoffee: "bunny-coffee.jpg",
+  photoFace: "bunny-face.jpg"
 };
 
 const QUOTES = [
@@ -281,10 +326,10 @@ const S = {
   work:null, workOther:"", coach:null, offer:null, offerOther:"", offerOtherPrice:"",
   attract:[], attractOther:"", nurture:[], nurtureOther:"", convert:null, convertOther:"",
   invitedBy:"", proudSelf:"", proudHer:"",
-  email:"", completed:false
+  email:"", completed:false, week:null, weekEdited:false
 };
 const STEPS = ["welcome", ...(CONFIG.friendsgiving? ["friends"]:[]), "goal","hours","work","coach","offers","attract","nurture","convert","plan"];
-let step = 0, qi = 0, celebratedOffers = false;
+let step = 0, qi = 0, celebratedOffers = false, brush = "L";
 
 const $ = s => document.querySelector(s);
 const main = $("#main");
@@ -386,12 +431,71 @@ function otherBtn(selected, multi, group, label){
 const firstName = () => S.name.trim().split(/\s+/)[0] || "";
 const hi = () => firstName() ? `, ${esc(firstName())}` : "";
 
+/* ===== Plan data (one source for the screen, the PDF, the copy and the email) ===== */
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const DAYS_LONG = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const PARTS = ["Morning","Midday","Afternoon","Evening"];
+const WK = {L:"Life and family", C:"Serving clients", A:"Attracting", N:"Nurturing", S:"Inviting to buy", P:"Planning and numbers", O:"Open time"};
+const WK_BRUSH = ["L","C","A","N","S","P"];
+function planData(){
+  const c = chosen(), G = goalNum(), H = hoursNum();
+  const r1 = v => Math.round(v*10)/10;
+  const del = r1(Math.min(H, c.hrs)), mk = Math.min(Math.max(0, H - del), H*0.4);
+  const at = r1(mk*0.5), nu = r1(mk*0.25), co = r1(mk - at - nu), back = r1(Math.max(0, H - del - at - nu - co));
+  const cv = LABEL.convert(S.convert);
+  const ac = S.attract.map(k => k==="other" ? `${LABEL.attract(k)}, every week` : `${LABEL.attract(k)}, ${ATTRACT().find(x=>x.v===k).c}`);
+  const nc = S.nurture.map(k => k==="other" ? `${LABEL.nurture(k)}, every week` : `${LABEL.nurture(k)}, ${NURTURE.find(x=>x.v===k).c}`);
+  const cvDo = S.convert==="call" ? "book a sales call" : S.convert==="checkout" ? "see your checkout link" : `take your next step (${cv})`;
+  const perMonthSales = c.count ? Math.max(1, Math.ceil(c.count/12)) : 0;
+  const months = [
+    {m:"Month 1", title:"Name it and price it", items:[
+      `Write a one-page description of your ${c.name}${c.price? ` at ${money(c.price)} ${c.priceNote}`:""}.`,
+      `Put your ideal week on the calendar: life first, then your ${H} working hours.`,
+      `Set up how people say yes: ${cv.toLowerCase()}.`]},
+    {m:"Month 2", title:"Get in front of people", items: ac.length? ac.map(x=>x+".") : ["Pick one way to meet new people and do it every week."]},
+    {m:"Month 3", title:"Stay close and invite", items: [...(nc.length? nc.map(x=>x+".") : ["Stay in touch with everyone you met in Month 2."]),
+      `Invite ${perMonthSales? `at least ${perMonthSales*3} people a month to ${cvDo}, so ${perMonthSales} of them can say yes`:"people to say yes every month"}.`]}
+  ];
+  if(!S.week || !S.weekEdited) S.week = buildWeek(H, {del,at,nu,co,back});
+  return {c,G,H,del,at,nu,co,back,cv,ac,nc,cvDo,perMonthSales,months,week:S.week,
+    attract:S.attract.map(LABEL.attract), nurture:S.nurture.map(LABEL.nurture)};
+}
+// 28 cells, row by row: Morning Mon..Sun, Midday Mon..Sun, Afternoon..., Evening...
+function buildWeek(H, sp){
+  const w = new Array(28).fill("L");
+  const size = H<=10 ? 2 : 2.5;                       // hours per square
+  const nb = Math.max(1, Math.min(15, Math.round(H/size)));
+  const days = Math.min(5, Math.max(3, Math.ceil(nb/3)));
+  const work = [];
+  for(let p=0;p<3;p++) for(let d=0;d<days;d++) work.push(p*7+d);
+  const share = k => H? sp[k]/H : 0;
+  const cnt = {C:Math.round(nb*share("del")), A:Math.round(nb*share("at")), N:Math.round(nb*share("nu")), S:Math.round(nb*share("co")), P:0};
+  if(nb>=3){ if(!cnt.A) cnt.A=1; if(!cnt.S) cnt.S=1; }
+  if(nb>=6) cnt.P = 1;
+  if(!cnt.C && sp.del>0) cnt.C = 1;
+  let total = cnt.C+cnt.A+cnt.N+cnt.S+cnt.P;
+  while(total > nb){ const k = ["C","A","N","S"].reduce((a,b)=> cnt[b]>cnt[a]?b:a); cnt[k]--; total--; }
+  const seq = [...Array(cnt.P).fill("P"), ...Array(cnt.A).fill("A"), ...Array(cnt.N).fill("N"), ...Array(cnt.C).fill("C"), ...Array(cnt.S).fill("S")];
+  while(seq.length < nb) seq.push("O");               // hours inside your week that stay open
+  // mornings first across your work days, then middays, then afternoons; read left to right, top to bottom
+  const slots = work.slice(0, nb).sort((a,b)=> (a%7)-(b%7) || a-b);
+  slots.forEach((i,n)=> w[i] = seq[n]);
+  return w;
+}
+function weekCounts(w){ const o = {}; w.forEach(v=>o[v]=(o[v]||0)+1); return o; }
+function weekByDay(w){
+  return DAYS.map((d,di)=>{
+    const biz = PARTS.map((p,pi)=>({p, v:w[pi*7+di]})).filter(x=>x.v!=="L");
+    return {d, line: biz.length ? biz.map(x=>`${WK[x.v].toLowerCase()} (${x.p.toLowerCase()})`).join(", ") : "life and family"};
+  });
+}
+
 /* ===== Screens ===== */
 const SCREENS = {
   welcome(){
     return `<section class="screen hero">
       ${CONFIG.photoHero?`<figure class="hero-photo"><img src="${CONFIG.photoHero}" alt="Bunny Young at the beach"></figure>`:""}
-      <span class="eyebrow">DEFY Friendsgiving</span>
+      <span class="eyebrow">${CONFIG.friendsgiving?"DEFY Friendsgiving":"DEFY"}</span>
       <span class="script-big">Your Best Year Ever</span>
       <h1>Build your 2027 business plan in about three minutes.</h1>
       <p class="sub">Tell me what you want to make and how much you want to work. I'll show you three ways to get there, you pick the one that feels like you, and we'll build the plan together.</p>
@@ -459,6 +563,7 @@ const SCREENS = {
       <span class="eyebrow">Three ways to ${money(G)}</span>
       <h2 class="q">Here's how ${money(G)} fits into <span class="script">${H} hours</span> a week.</h2>
       <p class="sub">Which one of these ideas aligns the most with you${hi()}? Tap it.</p>
+      ${CONFIG.photoCoffee?`<div class="bnote"><img src="${CONFIG.photoCoffee}" alt="Bunny Young"><div><b>A note from Bunny</b><p>I work about six hours a week across three days. Pick the offer that fits the life you want, not the one you think you should want.</p></div></div>`:""}
       <div class="offers">${card(o.one)}${card(o.group)}${card(o.member)}</div>
       <div class="opts one">${otherBtn(isOther,false,"offer","I have a different offer in mind")}</div>
       <div class="other${isOther?" on":""}" style="gap:12px"><div class="field"><label for="offerOther">Your offer</label><input class="input" id="offerOther" placeholder="A VIP day, a retreat, a course..." value="${esc(S.offerOther)}"></div><div class="field"><label for="offerOtherPrice">Your price</label><div class="money"><input class="input" id="offerOtherPrice" inputmode="numeric" placeholder="5,000" value="${esc(S.offerOtherPrice)}"></div></div></div>
@@ -496,24 +601,19 @@ const SCREENS = {
     </section>`;
   },
   plan(){
-    const c = chosen(), G = goalNum(), H = hoursNum();
-    const a = S.attract.map(LABEL.attract), n = S.nurture.map(LABEL.nurture), cv = LABEL.convert(S.convert);
-    const r1 = v => Math.round(v*10)/10;
-    const del = r1(Math.min(H, c.hrs)), mk = Math.min(Math.max(0, H - del), H*0.4);
-    const at = r1(mk*0.5), nu = r1(mk*0.25), co = r1(mk - at - nu), back = r1(Math.max(0, H - del - at - nu - co));
+    const d = planData(); const {c,G,H,del,at,nu,co,back,cv} = d;
     const hr = v => v + (v===1?" hr":" hrs");
-    const ac = S.attract.map(k => k==="other" ? `${LABEL.attract(k)}, every week` : `${LABEL.attract(k)}, ${ATTRACT().find(x=>x.v===k).c}`);
-    const nc = S.nurture.map(k => k==="other" ? `${LABEL.nurture(k)}, every week` : `${LABEL.nurture(k)}, ${NURTURE.find(x=>x.v===k).c}`);
-    const cvDo = S.convert==="call" ? "book a sales call" : S.convert==="checkout" ? "see your checkout link" : `take your next step (${cv})`;
     const pct = v => H? (v/H*100) : 0;
-    const perMonthSales = c.count ? Math.max(1, Math.ceil(c.count/12)) : 0;
     const name = firstName();
     const q = QUOTES[0];
     return `<section class="screen plan" id="planDoc">
-      <div class="plan-hero">
-        <span class="eyebrow">Your 2027 plan is ready</span>
-        <span class="script-big">${name? esc(name)+", look at you" : "Look at you"}</span>
-        <p class="sub">You decided what you want and built a plan to get there. That is the part most people never do. Here it is.</p>
+      <div class="plan-hero${CONFIG.photoYes?" has-photo":""}">
+        <div style="display:grid;gap:10px">
+          <span class="eyebrow">Your 2027 plan is ready</span>
+          <span class="script-big">${name? esc(name)+", look at you" : "Look at you"}</span>
+          <p class="sub">You decided what you want and built a plan to get there. That is the part most people never do. Here it is.</p>
+        </div>
+        ${CONFIG.photoYes?`<figure class="plan-photo"><img src="${CONFIG.photoYes}" alt="Bunny Young celebrating"></figure>`:""}
       </div>
       <div class="tiles">
         <div class="tile"><span>Goal</span><b>${money(G)}</b><em>${money(G/12)} a month</em></div>
@@ -532,12 +632,18 @@ const SCREENS = {
           ${back>0?`<div><i style="background:transparent;border:1.5px solid var(--muted)"></i>Time you get back<b>${hr(back)}</b></div>`:""}
         </div>
       </div>
+      <div class="card" id="wkCard">
+        <h3>Your ideal week</h3>
+        <p class="sub" style="font-size:15.5px">Life goes on the calendar first. Then the business fits into what's left. Each square is about two hours. Pick a color, then tap a square to make it yours.</p>
+        <div class="wk-legend" id="wkLegend"></div>
+        <div class="wkgrid" id="wkGrid" role="grid" aria-label="Your ideal week"></div>
+        <div class="wk-tools"><span class="note">Dashed squares are open time you get back.</span><button type="button" class="linkbtn" id="wkReset">Reset to my suggested week</button></div>
+        ${CONFIG.photoCoffee?`<div class="bnote"><img src="${CONFIG.photoCoffee}" alt="Bunny Young"><div><b>A note from Bunny</b><p>I put my life on the calendar first and built the business around it. I'm at Disneyland three times a week. You get to do the same.</p></div></div>`:""}
+      </div>
       <div class="card">
         <h3>Your first 90 days</h3>
         <div class="months">
-          <div class="month"><span class="m">Month 1</span><div><h4>Name it and price it</h4><ul><li>Write a one-page description of your ${esc(c.name)}${c.price? ` at ${money(c.price)} ${esc(c.priceNote)}`:""}.</li><li>Block your ${H} working hours on the calendar first, then everything else.</li><li>Set up how people say yes: ${esc(cv.toLowerCase())}.</li></ul></div></div>
-          <div class="month"><span class="m">Month 2</span><div><h4>Get in front of people</h4><ul>${ac.length? ac.map(x=>`<li>${esc(x)}.</li>`).join("") : "<li>Pick one way to meet new people and do it every week.</li>"}</ul></div></div>
-          <div class="month"><span class="m">Month 3</span><div><h4>Stay close and invite</h4><ul>${nc.length? nc.map(x=>`<li>${esc(x)}.</li>`).join("") : "<li>Stay in touch with everyone you met in Month 2.</li>"}<li>Invite ${perMonthSales? `at least ${perMonthSales*3} people a month to ${esc(cvDo)}, so ${perMonthSales} of them can say yes`:"people to say yes every month"}.</li></ul></div></div>
+          ${d.months.map(m=>`<div class="month"><span class="m">${m.m}</span><div><h4>${esc(m.title)}</h4><ul>${m.items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div>`).join("")}
         </div>
       </div>
       ${S.proudSelf.trim()?`<div class="card proud"><h3>Tonight you celebrated</h3><p><b>You're proud of yourself for</b>${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p><b>You're proud of ${esc(S.invitedBy.trim()||"her")} for</b>${esc(S.proudHer.trim())}</p>`:""}</div>`:""}
@@ -549,7 +655,7 @@ const SCREENS = {
           <button class="btn btn-coral" type="submit">Email my plan</button>
         </form>
         <p class="note" id="sendNote">I'll send this plan to your inbox.</p>
-        <div class="row"><button class="btn btn-ghost" type="button" id="dlBtn">Download plan</button><button class="btn btn-ghost" type="button" id="cpBtn">Copy plan</button></div>
+        <div class="row"><button class="btn btn-ghost" type="button" id="dlBtn">Download my plan (PDF)</button><button class="btn btn-ghost" type="button" id="cpBtn">Copy plan</button></div>
       </div>
       <div class="cta">
         ${CONFIG.photoPlan?`<img class="cta-photo" src="${CONFIG.photoPlan}" alt="Bunny Young">`:""}
@@ -656,6 +762,7 @@ function next(){
   if(step===0 || reduce){ go(step+1); return; }
   const q = QUOTES[qi++ % QUOTES.length];
   $("#lqText").textContent = q.q; $("#lqCite").textContent = q.c;
+  const lp = $("#lqPhoto"); if(CONFIG.photoFace){ lp.src = CONFIG.photoFace; lp.alt = ""; lp.hidden = !/Bunny/.test(q.c); }
   $("#loaderLbl").textContent = STEPS[step+1]==="plan" ? "Building your plan" : (STEPS[step+1]==="offers" ? "Running your numbers" : LOADER_LABELS[qi % LOADER_LABELS.length]);
   const L = $("#loader"); L.classList.add("on"); L.setAttribute("aria-hidden","false");
   const wait = STEPS[step+1]==="plan" ? 2600 : 1700;
@@ -693,27 +800,28 @@ function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add
 
 /* ===== Plan as text ===== */
 function planText(){
-  const c = chosen(), G = goalNum(), H = hoursNum();
+  const d = planData(); const {c,G,H} = d;
   const lines = [
     `${firstName()? firstName()+"'s ":"My "}2027 Plan (built at ${CONFIG.source})`,
     "",
     `Goal: ${money(G)} for the year (${money(G/12)} a month)`,
     `Hours: ${H} a week`,
     `What I do: ${workLabel()}`,
-    `Coach: ${COACH.find(x=>x.v===S.coach)?.t || ""}`,
     `Offer: ${c.name}${c.price? ", "+money(c.price)+" "+c.priceNote : ""}`,
-    c.count? `I need: ${c.count.toLocaleString("en-US")} ${c.countLbl}` : "",
+    c.count? `I need: ${c.count.toLocaleString("en-US")} ${c.countLbl}` : null,
     "",
-    `Attract: ${S.attract.map(LABEL.attract).join("; ")}`,
-    `Nurture: ${S.nurture.map(LABEL.nurture).join("; ")}`,
-    `Convert: ${LABEL.convert(S.convert)}`,
+    `Attract: ${d.attract.join("; ")}`,
+    `Nurture: ${d.nurture.join("; ")}`,
+    `Convert: ${d.cv}`,
+    "",
+    "MY IDEAL WEEK",
+    ...weekByDay(d.week).map(x=>`${x.d}: ${x.line}`),
+    "",
+    "MY FIRST 90 DAYS",
+    ...d.months.flatMap(m=>[`${m.m}: ${m.title}`, ...m.items.map(i=>"  - "+i)]),
     S.proudSelf.trim()? "" : null,
     S.proudSelf.trim()? `I'm proud of myself for: ${S.proudSelf.trim()}` : null,
     S.proudHer.trim()? `I'm proud of ${S.invitedBy.trim()||"the woman who invited me"} for: ${S.proudHer.trim()}` : null,
-    "",
-    "Month 1: Name it and price it. Block my hours first. Set up how people say yes.",
-    "Month 2: Get in front of people every week.",
-    "Month 3: Stay close and invite.",
     "",
     `Book a DEFY call: ${CONFIG.bookUrl}`,
     "These numbers are planning math, not a promise of income or results."
@@ -730,7 +838,20 @@ function payload(event){
     offer:c.name, offerPrice:c.price, offerPriceNote:c.priceNote, clientsNeeded:c.count,
     attract:S.attract.map(LABEL.attract).join("; "), nurture:S.nurture.map(LABEL.nurture).join("; "), convert:LABEL.convert(S.convert),
     invitedBy:S.invitedBy.trim(), proudSelf:S.proudSelf.trim(), proudHer:S.proudHer.trim(),
-    planText:planText()
+    planText:planText(),
+    plan:planEmailData()
+  };
+}
+function planEmailData(){
+  const d = planData();
+  return {
+    first:firstName(), goal:d.G, hours:d.H, offer:d.c.name, price:d.c.price||0, priceNote:d.c.priceNote||"",
+    count:d.c.count||0, countLbl:d.c.countLbl||"",
+    split:{serving:d.del, attracting:d.at, nurturing:d.nu, inviting:d.co, back:d.back},
+    week:d.week.join(""), months:d.months,
+    attract:d.attract, nurture:d.nurture, convert:d.cv,
+    invitedBy:S.invitedBy.trim(), proudSelf:S.proudSelf.trim(), proudHer:S.proudHer.trim(),
+    quote:QUOTES[0]
   };
 }
 async function postLead(event){
@@ -743,16 +864,89 @@ async function postLead(event){
 
 /* ===== Plan screen actions ===== */
 const inPreview = /claude|anthropic/i.test(location.hostname) || location.protocol==="about:" || location.protocol==="blob:";
+function drawWeek(){
+  const g = $("#wkGrid"), L = $("#wkLegend"); if(!g) return;
+  const w = S.week, n = weekCounts(w);
+  L.innerHTML = WK_BRUSH.map(k=>`<button type="button" data-brush="${k}" aria-pressed="${brush===k}"><i class="c-${k}">${k}</i><span>${WK[k]}</span><em>${n[k]||0}</em></button>`).join("");
+  g.innerHTML = `<span></span>${DAYS.map(d=>`<span class="h">${d[0]}</span>`).join("")}` +
+    PARTS.map((p,pi)=>`<span class="rl">${p}</span>${DAYS.map((d,di)=>{const v=w[pi*7+di]; const lit = v && v!=="O";
+      return `<button type="button" class="cell${lit?" c-"+v:""}" ${lit?`data-c="${v}"`:""} data-i="${pi*7+di}" aria-label="${DAYS_LONG[di]} ${p}: ${WK[v]||"open"}">${lit?v:""}</button>`}).join("")}`).join("");
+  L.querySelectorAll("[data-brush]").forEach(b=>b.addEventListener("click",()=>{ brush=b.dataset.brush; drawWeek(); }));
+  g.querySelectorAll("[data-i]").forEach(b=>b.addEventListener("click",()=>{
+    const i = +b.dataset.i; S.week[i] = S.week[i]===brush ? "O" : brush; S.weekEdited = true; drawWeek();
+  }));
+}
+function loadScript(src){ return new Promise((ok,no)=>{ const t=document.createElement("script"); t.src=src; t.onload=ok; t.onerror=no; document.head.appendChild(t); }); }
+function planDocHTML(){
+  const d = planData(); const {c,G,H} = d; const name = firstName();
+  const col = {L:"#273945",C:"#88CCC6",A:"#F9AD84",N:"#D9E9E4",S:"#D85A30",P:"#FFFFFF",O:"#FFFFFF"};
+  const ink = {L:"#F3F3EE",C:"#14262C",A:"#3A1E12",N:"#273945",S:"#FFFFFF",P:"#273945",O:"#273945"};
+  const cell = v => `<td style="background:${col[v]};color:${ink[v]};border:${v==="O"?"1.5px dashed #9FB0B6":v==="P"?"1.5px solid #C9D4D7":"0"};height:30px;border-radius:7px;text-align:center;font:800 11px Montserrat,sans-serif">${v==="O"?"":v}</td>`;
+  const tile = (k,v,e) => `<div style="background:#fff;border:1px solid #E1E8E5;border-radius:14px;padding:12px 14px"><div style="font:700 9.5px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5A6D77">${k}</div><div style="font:800 22px Montserrat,sans-serif;color:#273945;margin-top:4px">${v}</div><div style="font:500 11.5px 'DM Sans',sans-serif;color:#5A6D77;margin-top:2px">${e}</div></div>`;
+  const h3 = t => `<div style="font:700 11.5px Montserrat,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#2C7A73;margin:0 0 10px">${t}</div>`;
+  const bar = [["Serving your clients",d.del,"#88CCC6"],["Attracting",d.at,"#F9AD84"],["Nurturing",d.nu,"#D9E9E4"],["Inviting to buy",d.co,"#D85A30"],["Time you get back",d.back,"#FFFFFF"]].filter(x=>x[1]>0);
+  const hr = v => v + (v===1?" hr":" hrs");
+  const sec = (inner, extra="") => `<div class="pd-avoid" style="background:#fff;border:1px solid #E1E8E5;border-radius:18px;padding:18px 20px;margin-top:14px;${extra}">${inner}</div>`;
+  return `<div style="width:720px;background:#F3F3EE;color:#273945;font:400 13px/1.5 'DM Sans',sans-serif;padding:0">
+    <div class="pd-avoid" style="background:#0E1A22;border-radius:22px;padding:24px 26px;display:flex;align-items:center;gap:20px;color:#F3F3EE">
+      <div style="flex:1;min-width:0">
+        <div style="display:inline-block;border:1.5px solid rgba(243,243,238,.75);padding:3px 8px 2px;font:800 14px Montserrat,sans-serif;letter-spacing:.14em"><span style="color:#88CCC6">DE</span>FY</div>
+        <div style="font:400 50px/1 Allura,cursive;color:#F9AD84;margin-top:12px">${name? esc(name)+"'s 2027 plan" : "My 2027 plan"}</div>
+        <div style="font:500 13px 'DM Sans',sans-serif;color:#C9D4D7;margin-top:8px">Built at ${esc(CONFIG.source)}. Life on the calendar first, then the business.</div>
+      </div>
+      ${CONFIG.photoYes?`<img src="${CONFIG.photoYes}" style="width:118px;height:118px;border-radius:50%;object-fit:cover;object-position:40% 20%;border:3px solid #F9AD84;flex:none">`:""}
+    </div>
+    <div class="pd-avoid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px">
+      ${tile("Goal",money(G),money(G/12)+" a month")}${tile("Your week",H+" hrs","and not one more")}${tile("Your offer",c.price?money(c.price):"Your price",esc(c.name))}${tile("You need",c.count?c.count.toLocaleString("en-US"):"?",esc(c.countLbl))}
+    </div>
+    ${sec(`${h3(`Your week, ${H} hours`)}
+      <div style="display:flex;height:12px;border-radius:999px;overflow:hidden;background:#E6F0EC">${bar.map(x=>`<i style="display:block;width:${H?x[1]/H*100:0}%;background:${x[2]}"></i>`).join("")}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;margin-top:12px">${bar.map(x=>`<div style="display:flex;align-items:center;gap:8px"><i style="width:10px;height:10px;border-radius:3px;background:${x[2]};border:${x[2]==="#FFFFFF"?"1px solid #9FB0B6":"0"}"></i><span>${x[0]}</span><b style="margin-left:auto;font-family:Montserrat,sans-serif">${hr(x[1])}</b></div>`).join("")}</div>`)}
+    ${sec(`${h3("Your ideal week")}
+      <table style="width:100%;border-collapse:separate;border-spacing:4px;table-layout:fixed">
+        <tr><td style="width:70px"></td>${DAYS.map(x=>`<td style="text-align:center;font:800 10.5px Montserrat,sans-serif;letter-spacing:.1em;color:#5A6D77">${x.toUpperCase()}</td>`).join("")}</tr>
+        ${PARTS.map((p,pi)=>`<tr><td style="font:700 9.5px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5A6D77">${p}</td>${DAYS.map((x,di)=>cell(d.week[pi*7+di])).join("")}</tr>`).join("")}
+      </table>
+      <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:11.5px">${["L","C","A","N","S","P","O"].map(k=>`<span style="display:inline-flex;align-items:center;gap:6px"><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${col[k]};border:${k==="O"?"1px dashed #9FB0B6":k==="P"?"1px solid #C9D4D7":"0"}"></i>${k==="O"?"":k+" "}${WK[k]}</span>`).join("")}</div>`)}
+    ${sec(`${h3("Your first 90 days")}
+      ${d.months.map(m=>`<div style="display:grid;grid-template-columns:80px 1fr;gap:12px;padding:8px 0;border-top:1px solid #EEF2F0"><div style="font:800 11px Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#B54F25;padding-top:2px">${m.m}</div><div><div style="font:700 14.5px Montserrat,sans-serif;margin-bottom:4px">${esc(m.title)}</div><ul style="margin:0;padding-left:16px">${m.items.map(i=>`<li style="margin:2px 0">${esc(i)}</li>`).join("")}</ul></div></div>`).join("")}`)}
+    ${S.proudSelf.trim()? sec(`${h3("Tonight you celebrated")}<p style="margin:0 0 8px"><b style="font-family:Montserrat,sans-serif">You're proud of yourself for:</b> ${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p style="margin:0"><b style="font-family:Montserrat,sans-serif">You're proud of ${esc(S.invitedBy.trim()||"her")} for:</b> ${esc(S.proudHer.trim())}</p>`:""}`) : ""}
+    <div class="pd-avoid" style="border-left:4px solid #88CCC6;padding:4px 0 4px 18px;margin:18px 0 0"><div style="font:italic 500 21px/1.3 'Cormorant Garamond',Georgia,serif">${esc(QUOTES[0].q)}</div><div style="font:700 10.5px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#B54F25;margin-top:6px">${esc(QUOTES[0].c)}</div></div>
+    <div class="pd-avoid" style="background:#0E1A22;color:#F3F3EE;border-radius:22px;padding:22px 24px;margin-top:16px;display:flex;gap:18px;align-items:center">
+      ${CONFIG.photoPlan?`<img src="${CONFIG.photoPlan}" style="width:84px;height:84px;border-radius:50%;object-fit:cover;object-position:50% 18%;border:3px solid #F9AD84;flex:none">`:""}
+      <div style="flex:1"><div style="font:400 34px/1 Allura,cursive;color:#F9AD84">Want help building it?</div><div style="color:#C9D4D7;margin:6px 0 12px">This is the exact work we do inside DEFY. Bring this plan to your call.</div>
+      <a href="${CONFIG.bookUrl}" style="display:inline-block;background:#88CCC6;color:#1B2C36;text-decoration:none;font:800 12px Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:11px 20px;border-radius:999px">Book my DEFY call</a></div>
+    </div>
+    <div style="font-size:10.5px;color:#5A6D77;margin-top:12px;text-align:center">These numbers are planning math based on your answers. They are not a promise of income or results. 🤍 Bunny + Guinness</div>
+  </div>`;
+}
+async function downloadPlan(){
+  const fname = (firstName()||"My")+"-2027-Plan";
+  toast("Making your PDF...");
+  try{
+    if(!window.html2pdf) await loadScript("html2pdf.bundle.min.js");
+    await html2pdf().set({
+      margin:[0.35,0.35,0.35,0.35], filename:fname+".pdf", enableLinks:true,
+      image:{type:"jpeg", quality:0.95},
+      html2canvas:{scale:2, useCORS:true, backgroundColor:"#F3F3EE", logging:false},
+      jsPDF:{unit:"in", format:"letter", orientation:"portrait"},
+      pagebreak:{mode:["css","legacy"], avoid:[".pd-avoid"]}
+    }).from(planDocHTML()).save();
+    toast("Your plan is downloading");
+  }catch(e){
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${fname}</title><base href="${location.href}"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=DM+Sans:wght@400;500;700&family=Allura&family=Cormorant+Garamond:ital,wght@1,500&display=swap"></head><body style="margin:0;background:#F3F3EE;display:flex;justify-content:center;padding:24px">${planDocHTML()}</body></html>`;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([html],{type:"text/html"}));
+    a.download = fname+".html"; document.body.appendChild(a); a.click(); a.remove();
+    toast("Your plan is downloading as a page");
+  }
+}
 function planReady(){
   setTimeout(()=>celebrate(true), 150);
+  drawWeek();
+  $("#wkReset").addEventListener("click",()=>{ S.weekEdited=false; S.week=null; planData(); drawWeek(); toast("Back to your suggested week"); });
   if(!S.completed){ S.completed = true; postLead("completed"); }
   const dl = $("#dlBtn"); if(inPreview) dl.hidden = true;
-  dl.addEventListener("click", () => {
-    const blob = new Blob([planText()], {type:"text/plain"});
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-    a.download = (firstName()||"my")+"-2027-plan.txt"; document.body.appendChild(a); a.click(); a.remove();
-    toast("Your plan is downloading");
-  });
+  dl.addEventListener("click", downloadPlan);
   $("#cpBtn").addEventListener("click", () => {
     const txt = planText();
     if(navigator.clipboard && navigator.clipboard.writeText){
@@ -772,7 +966,7 @@ function planReady(){
     if(ok) celebrate(false);
   });
   $("#restartBtn").addEventListener("click", () => {
-    Object.assign(S,{id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())), goal:null,goalOther:"",hours:null,hoursOther:"",work:null,workOther:"",coach:null,offer:null,offerOther:"",offerOtherPrice:"",attract:[],attractOther:"",nurture:[],nurtureOther:"",convert:null,convertOther:"",email:"",completed:false});
+    Object.assign(S,{id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())), goal:null,goalOther:"",hours:null,hoursOther:"",work:null,workOther:"",coach:null,offer:null,offerOther:"",offerOtherPrice:"",attract:[],attractOther:"",nurture:[],nurtureOther:"",convert:null,convertOther:"",email:"",completed:false,week:null,weekEdited:false});
     celebratedOffers=false; go(0);
   });
 }

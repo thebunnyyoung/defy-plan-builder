@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>DEFY Plan Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Allura&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
+<style>
+/* Layout: one question per screen, Apple-style stage on deep DEFY navy, a sticky progress header and a sticky action bar. The plan reveal becomes a small dashboard. */
+:root{
+  --bg:#0E1A22; --bg-2:#0A141A; --surface:#15252F; --surface-2:#1C303C; --ink:#F3F3EE; --muted:#A7B6BB; --line:rgba(243,243,238,.12);
+  --teal:#88CCC6; --peach:#F9AD84; --coral:#E46A3D; --coral-hover:#F07A4C; --mint:#D9E9E4;
+  --accent-ink:#F9AD84; --teal-ink:#88CCC6; --on-coral:#FFFFFF; --sel:rgba(249,173,132,.12);
+  --shadow:0 30px 60px -30px rgba(0,0,0,.75);
+  --display:"Montserrat",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:"DM Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --script:"Allura","Brush Script MT","Segoe Script",cursive;
+  --quote:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#F3F3EE; --bg-2:#273945; --surface:#FFFFFF; --surface-2:#E6F0EC; --ink:#273945; --muted:#5A6D77; --line:rgba(39,57,69,.13);
+  --teal:#88CCC6; --peach:#F9AD84; --coral:#D85A30; --coral-hover:#C24E27; --mint:#D9E9E4;
+  --accent-ink:#B54F25; --teal-ink:#2C7A73; --on-coral:#FFFFFF; --sel:rgba(216,90,48,.08);
+  --shadow:0 24px 50px -30px rgba(39,57,69,.35); color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#F3F3EE; --bg-2:#273945; --surface:#FFFFFF; --surface-2:#E6F0EC; --ink:#273945; --muted:#5A6D77; --line:rgba(39,57,69,.13);
+  --teal:#88CCC6; --peach:#F9AD84; --coral:#D85A30; --coral-hover:#C24E27; --mint:#D9E9E4;
+  --accent-ink:#B54F25; --teal-ink:#2C7A73; --on-coral:#FFFFFF; --sel:rgba(216,90,48,.08);
+  --shadow:0 24px 50px -30px rgba(39,57,69,.35); color-scheme:light}
+
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased;min-height:100vh}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:#0A141A}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+p{margin:0}
+.eyebrow{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal-ink)}
+
+/* Header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:#0A141A;color:#F3F3EE}
+.top-in{display:flex;align-items:center;gap:14px;min-height:60px;max-width:1080px;margin:0 auto}
+.logo{display:inline-flex;border:1.5px solid rgba(243,243,238,.75);padding:3px 8px 2px;font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:.14em;line-height:1.2}
+.logo .de{color:#88CCC6}
+.top .title{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:#A7B6BB;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.top .spacer{flex:1}
+.pct{font-family:var(--display);font-weight:700;font-size:13px;color:#F9AD84;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:5px;background:rgba(243,243,238,.10)}
+.bar i{display:block;height:100%;width:6%;background:linear-gradient(90deg,#88CCC6,#F9AD84);border-radius:0 3px 3px 0;transition:width .8s cubic-bezier(.2,.8,.2,1);box-shadow:0 0 14px rgba(249,173,132,.55)}
+
+/* Stage */
+main{max-width:760px;margin:0 auto;padding-block:44px 140px}
+.screen{display:grid;gap:22px;animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:.001;transform:translateY(14px)}to{opacity:1;transform:none}}
+.q{font-size:clamp(28px,5vw,40px);font-weight:700;line-height:1.12;letter-spacing:-.01em}
+.q .script{font-family:var(--script);font-weight:400;font-size:1.45em;color:var(--accent-ink);letter-spacing:0;line-height:.8}
+.sub{color:var(--muted);font-size:17px;max-width:58ch}
+
+/* Hero */
+.hero{display:grid;gap:18px;padding-top:10px}
+.hero .script-big{font-family:var(--script);font-size:clamp(56px,11vw,92px);color:var(--accent-ink);line-height:.85}
+.hero h1{font-size:clamp(30px,5.6vw,46px);font-weight:700;line-height:1.08;letter-spacing:-.01em}
+.hero-photo{margin:0;border-radius:24px;overflow:hidden;aspect-ratio:4/3;background:#0A141A;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.hero-photo img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;display:block}
+@media(min-width:800px){.hero-photo{aspect-ratio:16/9}}
+.cta-photo{width:96px;height:96px;border-radius:50%;object-fit:cover;object-position:50% 18%;border:3px solid #F9AD84;position:relative;z-index:1}
+.proud{display:grid;gap:14px}
+.proud p{margin:0}
+.proud b{display:block;font-family:var(--display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px 22px;color:var(--muted);font-size:15px}
+.hero-meta span{display:inline-flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--teal);display:inline-block}
+
+/* Options */
+.opts{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
+.opts.one{grid-template-columns:1fr}
+.opt{position:relative;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:18px 18px 18px 52px;cursor:pointer;transition:border-color .2s,background .2s,transform .15s;min-height:64px;display:grid;gap:4px;align-content:center}
+.opt:hover{border-color:color-mix(in srgb,var(--accent-ink) 55%,transparent);transform:translateY(-1px)}
+.opt::before{content:"";position:absolute;left:18px;top:50%;width:20px;height:20px;margin-top:-10px;border-radius:50%;border:1.5px solid var(--muted);transition:all .2s}
+.opt.multi::before{border-radius:6px}
+.opt[aria-pressed="true"]{border-color:var(--accent-ink);background:var(--sel)}
+.opt[aria-pressed="true"]::before{border-color:var(--coral);background:var(--coral) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5 10.5l3.2 3.2L15 7' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat}
+.opt b{font-family:var(--display);font-weight:700;font-size:17px;line-height:1.25}
+.opt small{color:var(--muted);font-size:14.5px;line-height:1.45}
+.tag{display:inline-block;justify-self:start;font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal-ink);border:1px solid color-mix(in srgb,var(--teal-ink) 50%,transparent);border-radius:999px;padding:2px 8px;margin-bottom:2px}
+
+.field{display:grid;gap:8px}
+.field label{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.input{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;font-size:18px;transition:border-color .2s}
+.input:focus{outline:none;border-color:var(--accent-ink)}
+textarea.input{min-height:96px;resize:vertical}
+.other{display:none}
+.other.on{display:grid;animation:rise .35s both}
+.money{position:relative}
+.money .input{padding-left:36px}
+.money::before{content:"$";position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--muted)}
+
+/* Offers */
+.offers{display:grid;gap:14px}
+.offer{position:relative;text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:20px;padding:22px;cursor:pointer;display:grid;gap:14px;transition:border-color .2s,transform .15s,background .2s}
+.offer:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent-ink) 55%,transparent)}
+.offer[aria-pressed="true"]{border-color:var(--accent-ink);background:var(--sel)}
+.offer-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.offer-h h3{font-size:20px;font-weight:700}
+.offer-h p{color:var(--muted);font-size:15px;margin-top:4px}
+.price{font-family:var(--display);font-weight:800;font-size:30px;color:var(--accent-ink);line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.price small{display:block;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.06em;margin-top:6px;text-align:right}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fact{background:var(--surface-2);border-radius:12px;padding:10px 12px;min-width:0}
+.fact span{display:block;font-size:11.5px;font-family:var(--display);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fact b{font-family:var(--display);font-size:17px;font-variant-numeric:tabular-nums}
+.pick{position:absolute;top:-11px;right:18px;background:var(--coral);color:var(--on-coral);font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border-radius:999px;padding:4px 10px;opacity:0;transform:scale(.8);transition:all .25s}
+.offer[aria-pressed="true"] .pick{opacity:1;transform:none}
+.fine{font-size:13px;color:var(--muted);line-height:1.5}
+
+/* Action bar */
+.actions{position:fixed;left:0;right:0;bottom:0;z-index:15;background:linear-gradient(180deg,transparent,var(--bg) 30%);padding-top:28px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.actions-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:999px;cursor:pointer;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:16px 28px;text-decoration:none;transition:background .2s,transform .2s,opacity .2s,box-shadow .2s;min-height:52px}
+.btn-coral{background:var(--coral);color:var(--on-coral);box-shadow:0 12px 26px -14px var(--coral)}
+.btn-coral:hover{background:var(--coral-hover);transform:translateY(-1px)}
+.btn-coral[disabled]{opacity:.38;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--accent-ink)}
+.btn-teal{background:var(--teal);color:#1B2C36}
+.btn-teal:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.back{background:none;border:0;color:var(--muted);font-family:var(--display);font-weight:600;font-size:14px;cursor:pointer;padding:12px 6px}
+.back:hover{color:var(--ink)}
+.actions .grow{flex:1}
+.hint{font-size:13.5px;color:var(--muted)}
+.arrow{transition:transform .2s}
+.btn:hover .arrow{transform:translateX(3px)}
+
+/* Loading quote */
+.loader{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .25s}
+.loader.on{opacity:1;pointer-events:auto}
+.loader-card{max-width:560px;margin:0 16px;display:grid;gap:18px}
+.spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--peach);animation:sp 0.9s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lq{border-left:4px solid var(--teal);padding:4px 0 4px 20px;display:grid;gap:10px}
+.lq q{font-family:var(--quote);font-style:italic;font-weight:500;font-size:clamp(24px,4.2vw,32px);line-height:1.25;quotes:none}
+.lq cite{font-style:normal;font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink)}
+.loader .lbl{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:12px}
+
+/* Celebration */
+.fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
+.uni{position:absolute;bottom:-90px;font-size:44px;filter:drop-shadow(0 8px 18px rgba(249,173,132,.45));animation:float 3.6s cubic-bezier(.3,.6,.3,1) forwards}
+.uni::after{content:"✦";position:absolute;right:-14px;top:-6px;font-size:18px;color:#F9AD84;animation:twinkle .8s ease-in-out infinite alternate}
+@keyframes float{0%{transform:translate(0,0) rotate(-8deg);opacity:0}10%{opacity:1}50%{transform:translate(var(--dx),-55vh) rotate(8deg)}100%{transform:translate(calc(var(--dx)*-1),-115vh) rotate(-6deg);opacity:0}}
+@keyframes twinkle{from{opacity:.3;transform:scale(.7)}to{opacity:1;transform:scale(1.2)}}
+.toast{position:fixed;left:50%;top:calc(80px + env(safe-area-inset-top,0px));transform:translate(-50%,-20px);background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:12px 20px;font-family:var(--display);font-weight:600;font-size:14px;z-index:60;opacity:0;transition:all .35s;box-shadow:var(--shadow);max-width:calc(100% - 32px);text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* Plan */
+.plan{display:grid;gap:26px}
+.plan-hero{display:grid;gap:10px}
+.plan-hero .script-big{font-family:var(--script);font-size:clamp(54px,10vw,84px);color:var(--accent-ink);line-height:.85}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.tile span{display:block;font-family:var(--display);font-weight:600;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tile b{display:block;font-family:var(--display);font-weight:800;font-size:24px;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.1;overflow-wrap:anywhere}
+.tile em{display:block;font-style:normal;font-size:13px;color:var(--muted);margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:24px;display:grid;gap:16px;min-width:0}
+.card h3{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal-ink)}
+.week{display:flex;height:16px;border-radius:999px;overflow:hidden;background:var(--surface-2)}
+.week i{display:block;height:100%}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+.legend div{display:flex;align-items:center;gap:10px;font-size:15px;min-width:0}
+.legend i{width:12px;height:12px;border-radius:3px;flex:none}
+.legend b{font-family:var(--display);margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.months{display:grid;gap:14px}
+.month{display:grid;grid-template-columns:86px minmax(0,1fr);gap:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.month:last-child{border-bottom:0;padding-bottom:0}
+.month .m{font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);padding-top:2px}
+.month h4{font-family:var(--display);font-size:17px;margin:0 0 6px}
+.month ul{margin:0;padding-left:18px;display:grid;gap:4px;color:var(--ink)}
+.month li::marker{color:var(--teal-ink)}
+.pq{border-left:4px solid var(--teal);padding-left:20px}
+.pq q{font-family:var(--quote);font-style:italic;font-size:26px;line-height:1.3;quotes:none}
+.pq cite{display:block;margin-top:8px;font-style:normal;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink)}
+.cta{background:#0A141A;color:#F3F3EE;border-radius:24px;padding:28px;display:grid;gap:14px;position:relative;overflow:hidden}
+.cta::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(249,173,132,.35),transparent 70%)}
+.cta .script{font-family:var(--script);font-size:46px;color:#F9AD84;line-height:.9}
+.cta p{color:#C9D4D7;max-width:52ch}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.cta .alt{color:#C9D4D7;font-size:14px}
+.cta .alt a{color:#88CCC6}
+.send{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.note{font-size:14px;color:var(--muted)}
+.note.ok{color:var(--teal-ink)}
+.restart{justify-self:start}
+/* Photos */
+.plan-hero{grid-template-columns:minmax(0,1fr)}
+.plan-hero.has-photo{grid-template-columns:minmax(0,1fr) 220px;align-items:center;gap:22px}
+.plan-photo{margin:0;border-radius:22px;overflow:hidden;aspect-ratio:4/5;background:#0A141A;box-shadow:0 18px 40px rgba(0,0,0,.25);transform:rotate(2deg)}
+.plan-photo img{width:100%;height:100%;object-fit:cover;object-position:40% 20%;display:block}
+.bnote{display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px;align-items:start;background:var(--surface-2);border-radius:18px;padding:14px 16px}
+.bnote img{width:64px;height:64px;border-radius:50%;object-fit:cover;object-position:50% 25%;border:2px solid var(--peach)}
+.bnote b{display:block;font-family:var(--display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:2px}
+.bnote p{font-size:15.5px;line-height:1.5}
+.lq-photo{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--peach)}
+/* Ideal week */
+.wk-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.wk-legend button{display:flex;gap:10px;align-items:center;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer;text-align:left;font-size:14px;min-width:0;line-height:1.25}
+.wk-legend button[aria-pressed="true"]{border-color:var(--accent-ink);box-shadow:0 0 0 3px var(--sel)}
+.wk-legend i{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-style:normal;font-family:var(--display);font-weight:800;font-size:12px}
+.wk-legend em{font-style:normal;margin-left:auto;font-family:var(--display);font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums}
+.wkgrid{display:grid;grid-template-columns:62px repeat(7,minmax(0,1fr));gap:5px}
+.wkgrid .h{font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.1em;text-align:center;color:var(--muted);padding:2px 0}
+.wkgrid .rl{font-family:var(--display);font-weight:700;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center}
+.cell{height:44px;border-radius:10px;border:1.5px dashed var(--line);background:none;cursor:pointer;font-family:var(--display);font-weight:800;font-size:13px;transition:transform .12s;padding:0;min-width:0}
+.cell:active{transform:scale(.92)}
+.cell[data-c]{border-style:solid;border-color:transparent}
+.c-L{background:#273945;color:#F3F3EE;border:1.5px solid rgba(243,243,238,.22)!important}
+.c-C{background:#88CCC6;color:#14262C}
+.c-A{background:#F9AD84;color:#3A1E12}
+.c-N{background:#D9E9E4;color:#273945}
+.c-S{background:#D85A30;color:#fff}
+.c-P{background:#F3F3EE;color:#273945;border:1.5px solid rgba(39,57,69,.25)!important}
+.c-O{background:none;border:1.5px dashed var(--muted)!important}
+.wk-sum{display:grid;gap:6px;font-size:15px}
+.wk-sum div{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px}
+.wk-sum b{font-family:var(--display);font-size:13px;letter-spacing:.08em;color:var(--accent-ink)}
+.wk-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.linkbtn{background:none;border:0;padding:6px 0;color:var(--teal-ink);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.06em;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@media (max-width:640px){
+  .plan-hero.has-photo{grid-template-columns:minmax(0,1fr) 120px;gap:14px}
+  .wk-legend{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .wkgrid{grid-template-columns:44px repeat(7,minmax(0,1fr));gap:4px}
+  .wkgrid .rl{font-size:9px;letter-spacing:.02em}
+  .cell{height:38px;border-radius:8px;font-size:12px}
+}
+
+@media (max-width:640px){
+  main{padding-block:28px 140px}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .facts{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .fact{padding:8px 9px}
+  .fact b{font-size:15px}
+  .legend{grid-template-columns:1fr}
+  .send{grid-template-columns:1fr}
+  .month{grid-template-columns:1fr;gap:6px}
+  .top .title{display:none}
+  .btn{padding:15px 22px}
+  .price{font-size:26px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="top-in gut">
+    <span class="logo" aria-label="DEFY"><span class="de">DE</span>FY</span>
+    <span class="title">Your 2027 Plan Builder</span>
+    <span class="spacer"></span>
+    <span class="pct" id="pct">6%</span>
+  </div>
+  <div class="bar" role="progressbar" aria-label="Plan progress" aria-valuemin="0" aria-valuemax="100" id="barwrap"><i id="bar"></i></div>
+</header>
+
+<main class="gut" id="main" aria-live="polite"></main>
+
+<div class="actions gut" id="actions">
+  <div class="actions-in">
+    <button class="back" id="backBtn" type="button">Back</button>
+    <span class="grow hint" id="hint"></span>
+    <button class="btn btn-coral" id="nextBtn" type="button"><span id="nextLbl">Next</span> <span class="arrow" aria-hidden="true">→</span></button>
+  </div>
+</div>
+
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader-card">
+    <div class="lbl"><span class="spin"></span><span id="loaderLbl">Building your next step</span></div>
+    <img class="lq-photo" id="lqPhoto" alt="" hidden>
+    <blockquote class="lq" style="margin:0"><q id="lqText"></q><cite id="lqCite"></cite></blockquote>
+  </div>
+</div>
+<div class="fx" id="fx" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ===== Settings Bunny can change ===== */
+const CONFIG = {
+  // Paste the Google Apps Script web app URL here to save every plan as a lead and email Bunny.
+  endpoint: "",
+  bookUrl: "https://calendar.app.google/pNYroKV1cYxonisL9",
+  applyUrl: "https://www.abetterplaceconsulting.com/defy-application",
+  source: "DEFY Friendsgiving 2026",
+  // Friendsgiving questions. Set to false after Nov 10 to take them off.
+  friendsgiving: true,
+  photoHero: "../bunny-pier.jpg",
+  photoPlan: "../bunny-sunset.jpg",
+  photoYes: "../bunny-yes.jpg",
+  photoCoffee: "../bunny-coffee.jpg",
+  photoFace: "../bunny-face.jpg"
+};
+
+const QUOTES = [
+  {q:"You get to have it all without having to do it all.", c:"Bunny Young"},
+  {q:"My business deserves the same commitment I would give to working for someone else.", c:"Jessie Theulen, DEFY member"},
+  {q:"Profits on purpose, peace on purpose.", c:"Bunny Young"},
+  {q:"She holds the bigger vision for me until I can find it again.", c:"Harmony Slater, DEFY member"},
+  {q:"See it, do it, be it.", c:"Bunny Young"},
+  {q:"DEFY is truly an investment in myself, and the best one I've ever made!", c:"Logan Ryan, DEFY member"},
+  {q:"Put your life on the calendar first. Build the business around it.", c:"Bunny Young"}
+];
+const LOADER_LABELS = ["Building your next step","Running your numbers","Matching ideas to your week","Lining up your plan","Adding a little magic"];
+
+/* ===== State ===== */
+const S = {
+  id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random().toString(16).slice(2)),
+  name:"", goal:null, goalOther:"", hours:null, hoursOther:"",
+  work:null, workOther:"", coach:null, offer:null, offerOther:"", offerOtherPrice:"",
+  attract:[], attractOther:"", nurture:[], nurtureOther:"", convert:null, convertOther:"",
+  invitedBy:"", proudSelf:"", proudHer:"",
+  email:"", completed:false, week:null, weekEdited:false
+};
+const STEPS = ["welcome", ...(CONFIG.friendsgiving? ["friends"]:[]), "goal","hours","work","coach","offers","attract","nurture","convert","plan"];
+let step = 0, qi = 0, celebratedOffers = false, brush = "L";
+
+const $ = s => document.querySelector(s);
+const main = $("#main");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => "$" + Math.round(n).toLocaleString("en-US");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ===== Numbers ===== */
+function goalNum(){ if(S.goal==="other"){ const n = parseFloat(String(S.goalOther).replace(/[^0-9.]/g,"")); return n>0?n:0;} return S.goal||0; }
+function hoursNum(){ if(S.hours==="other"){ const n = parseFloat(String(S.hoursOther).replace(/[^0-9.]/g,"")); return n>0?n:0;} return S.hours||0; }
+function nice(x){ if(x>=10000) return Math.round(x/500)*500; if(x>=1000) return Math.round(x/100)*100; if(x>=200) return Math.round(x/50)*50; return Math.max(27,Math.round(x)); }
+function workLabel(){ if(S.work==="other") return S.workOther.trim() || "your work"; const w = WORK.find(x=>x.v===S.work); return w? w.short : "your work"; }
+
+function offers(){
+  const G = goalNum(), H = hoursNum();
+  const D = Math.max(1, H*0.6); // delivery hours, the rest goes to attracting, nurturing and selling
+  // 1:1
+  const c1 = Math.max(3, Math.min(20, Math.floor(D/0.75)));
+  const p1 = nice(G/c1);
+  // Group
+  const cohorts = Math.max(1, Math.min(3, Math.floor(D/2.5)));
+  const members = cohorts*12*2;
+  const p2 = nice(G/members);
+  // Membership
+  const tiers = [47,97,197,297,497,997];
+  let p3 = tiers[tiers.length-1];
+  for(const t of tiers){ if(G/(t*12) <= 300){ p3 = t; break; } }
+  const m3 = Math.ceil(G/(p3*12));
+  const g = cohorts*2.5;
+  return {
+    one:{key:"one", name:"1:1 Private Coaching", blurb:"A 12-month container with your most committed clients.", price:p1, priceNote:"per client, per year", monthly:p1/12, count:c1, countLbl:"clients", hrs:Math.min(H, Math.round(c1*0.75*10)/10), perMonth:G/12},
+    group:{key:"group", name:"Group Program", blurb:`Two 6-month rounds a year, ${cohorts===1?"one group":cohorts+" groups"} of 12 at a time.`, price:p2, priceNote:"per member, per round", monthly:p2/6, count:members, countLbl:"members a year", hrs:Math.round(g*10)/10, perMonth:G/12},
+    member:{key:"member", name:"Membership", blurb:"A monthly community with one live call and simple resources.", price:p3, priceNote:"per member, per month", monthly:p3, count:m3, countLbl:"members", hrs:3, perMonth:G/12}
+  };
+}
+function chosen(){
+  if(S.offer==="other"){
+    const pr = parseFloat(String(S.offerOtherPrice).replace(/[^0-9.]/g,""))||0;
+    const G = goalNum();
+    return {key:"other", name:S.offerOther.trim()||"Your own offer", price:pr, priceNote:"per sale", count: pr? Math.ceil(G/pr):0, countLbl:"sales a year", hrs: Math.round(hoursNum()*0.6*10)/10, perMonth:G/12};
+  }
+  return offers()[S.offer];
+}
+
+/* ===== Options ===== */
+const GOALS = [{v:100000,t:"$100K"},{v:250000,t:"$250K"},{v:500000,t:"$500K"},{v:1000000,t:"$1M"}];
+const HOURS = [{v:6,t:"6 hours",s:"Bunny's week. Three days, two hours each."},{v:10,t:"10 hours",s:"Two focused mornings and a little more."},{v:20,t:"20 hours",s:"Part time, on your terms."},{v:30,t:"30 hours",s:"Four solid days with Friday off."}];
+const WORK = [
+  {v:"coach", t:"Coaching", short:"coaching", s:"Life, business, health or mindset coaching."},
+  {v:"consult", t:"Consulting or strategy", short:"consulting", s:"You solve a business problem for a fee."},
+  {v:"service", t:"Done-for-you services", short:"your services", s:"Design, marketing, ops, VA or agency work."},
+  {v:"wellness", t:"Wellness or healing", short:"your wellness work", s:"Yoga, energy work, therapy-adjacent work."},
+  {v:"creative", t:"Creative or speaking", short:"your creative work", s:"Photography, writing, speaking, events."}
+];
+const COACH = [{v:"yes",t:"Yes, I'm a coach"},{v:"also",t:"I coach, and do other things too"},{v:"no",t:"Not yet, but I want to teach what I know"}];
+function ATTRACT(){
+  const base = {
+    masterclass:{c:"once a month", t:"A free monthly masterclass", s:"Teach one thing well, then invite people to the next step."},
+    podcast:{c:"two guest spots a month", t:"Podcasts and stages", s:"Borrow other people's audiences. Two guest spots a month."},
+    social:{c:"three days a week", t:"Instagram stories and reels", s:"Show your real week three days a week. People buy from people they know."},
+    referral:{c:"one ask a week", t:"Referral asks", s:"Ask happy clients who else needs this. The warmest leads you will ever get."},
+    amplifiers:{c:"invite two new Amplifiers a month", t:"Amplifiers", s:"Partners who share your offer with their people and earn a thank-you for every client they send."},
+    linkedin:{c:"every weekday", t:"LinkedIn conversations", s:"Five thoughtful comments and two messages a day."},
+    collab:{c:"one a month", t:"Collaborations", s:"Co-host a live or a workshop with someone who serves the same person."}
+  };
+  const order = {
+    one:["referral","podcast","linkedin","social","masterclass","amplifiers","collab"],
+    group:["masterclass","collab","podcast","social","referral","amplifiers","linkedin"],
+    member:["masterclass","amplifiers","social","collab","podcast","referral","linkedin"],
+    other:["masterclass","referral","social","podcast","amplifiers","collab","linkedin"]
+  }[S.offer||"other"];
+  return order.map((k,i)=>({v:k, ...base[k], best:i<2}));
+}
+const NURTURE = [
+  {v:"newsletter", c:"same day every week", t:"A weekly newsletter", s:"One story, one lesson, one invitation. Same day every week."},
+  {v:"reachouts", c:"five a week", t:"Personal reach-outs", s:"Five real messages a week to people you already know."},
+  {v:"contacts", c:"add them to your list this month, then check in monthly", t:"Your Fathom and DEFY contacts", s:"Turn the people you have already talked to into a warm list."}
+];
+function CONVERT(){
+  const c = chosen(); const high = c && c.price >= 2000;
+  return [
+    {v:"call", t:"A sales call", s:"A 30-minute conversation to see if it's a fit.", best: high},
+    {v:"checkout", t:"A checkout link", s:"They read the page and buy. No call needed.", best: !high}
+  ];
+}
+const LABEL = {
+  attract: k => (k==="other"? (S.attractOther.trim()||"Your own idea") : ATTRACT().find(a=>a.v===k)?.t),
+  nurture: k => (k==="other"? (S.nurtureOther.trim()||"Your own idea") : NURTURE.find(a=>a.v===k)?.t),
+  convert: k => (k==="other"? (S.convertOther.trim()||"Your own way") : CONVERT().find(a=>a.v===k)?.t)
+};
+
+/* ===== Render helpers ===== */
+function optBtn({v,t,s,best}, selected, multi, group){
+  return `<button type="button" class="opt${multi?" multi":""}" data-group="${group}" data-v="${esc(v)}" aria-pressed="${selected?"true":"false"}">${best?'<span class="tag">Best fit for your offer</span>':""}<b>${esc(t)}</b>${s?`<small>${esc(s)}</small>`:""}</button>`;
+}
+function otherBtn(selected, multi, group, label){
+  return `<button type="button" class="opt${multi?" multi":""}" data-group="${group}" data-v="other" aria-pressed="${selected?"true":"false"}"><b>${label||"Something else"}</b><small>Write your own.</small></button>`;
+}
+const firstName = () => S.name.trim().split(/\s+/)[0] || "";
+const hi = () => firstName() ? `, ${esc(firstName())}` : "";
+
+/* ===== Plan data (one source for the screen, the PDF, the copy and the email) ===== */
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const DAYS_LONG = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const PARTS = ["Morning","Midday","Afternoon","Evening"];
+const WK = {L:"Life and family", C:"Serving clients", A:"Attracting", N:"Nurturing", S:"Inviting to buy", P:"Planning and numbers", O:"Open time"};
+const WK_BRUSH = ["L","C","A","N","S","P"];
+function planData(){
+  const c = chosen(), G = goalNum(), H = hoursNum();
+  const r1 = v => Math.round(v*10)/10;
+  const del = r1(Math.min(H, c.hrs)), mk = Math.min(Math.max(0, H - del), H*0.4);
+  const at = r1(mk*0.5), nu = r1(mk*0.25), co = r1(mk - at - nu), back = r1(Math.max(0, H - del - at - nu - co));
+  const cv = LABEL.convert(S.convert);
+  const ac = S.attract.map(k => k==="other" ? `${LABEL.attract(k)}, every week` : `${LABEL.attract(k)}, ${ATTRACT().find(x=>x.v===k).c}`);
+  const nc = S.nurture.map(k => k==="other" ? `${LABEL.nurture(k)}, every week` : `${LABEL.nurture(k)}, ${NURTURE.find(x=>x.v===k).c}`);
+  const cvDo = S.convert==="call" ? "book a sales call" : S.convert==="checkout" ? "see your checkout link" : `take your next step (${cv})`;
+  const perMonthSales = c.count ? Math.max(1, Math.ceil(c.count/12)) : 0;
+  const months = [
+    {m:"Month 1", title:"Name it and price it", items:[
+      `Write a one-page description of your ${c.name}${c.price? ` at ${money(c.price)} ${c.priceNote}`:""}.`,
+      `Put your ideal week on the calendar: life first, then your ${H} working hours.`,
+      `Set up how people say yes: ${cv.toLowerCase()}.`]},
+    {m:"Month 2", title:"Get in front of people", items: ac.length? ac.map(x=>x+".") : ["Pick one way to meet new people and do it every week."]},
+    {m:"Month 3", title:"Stay close and invite", items: [...(nc.length? nc.map(x=>x+".") : ["Stay in touch with everyone you met in Month 2."]),
+      `Invite ${perMonthSales? `at least ${perMonthSales*3} people a month to ${cvDo}, so ${perMonthSales} of them can say yes`:"people to say yes every month"}.`]}
+  ];
+  if(!S.week || !S.weekEdited) S.week = buildWeek(H, {del,at,nu,co,back});
+  return {c,G,H,del,at,nu,co,back,cv,ac,nc,cvDo,perMonthSales,months,week:S.week,
+    attract:S.attract.map(LABEL.attract), nurture:S.nurture.map(LABEL.nurture)};
+}
+// 28 cells, row by row: Morning Mon..Sun, Midday Mon..Sun, Afternoon..., Evening...
+function buildWeek(H, sp){
+  const w = new Array(28).fill("L");
+  const size = H<=10 ? 2 : 2.5;                       // hours per square
+  const nb = Math.max(1, Math.min(15, Math.round(H/size)));
+  const days = Math.min(5, Math.max(3, Math.ceil(nb/3)));
+  const work = [];
+  for(let p=0;p<3;p++) for(let d=0;d<days;d++) work.push(p*7+d);
+  const share = k => H? sp[k]/H : 0;
+  const cnt = {C:Math.round(nb*share("del")), A:Math.round(nb*share("at")), N:Math.round(nb*share("nu")), S:Math.round(nb*share("co")), P:0};
+  if(nb>=3){ if(!cnt.A) cnt.A=1; if(!cnt.S) cnt.S=1; }
+  if(nb>=6) cnt.P = 1;
+  if(!cnt.C && sp.del>0) cnt.C = 1;
+  let total = cnt.C+cnt.A+cnt.N+cnt.S+cnt.P;
+  while(total > nb){ const k = ["C","A","N","S"].reduce((a,b)=> cnt[b]>cnt[a]?b:a); cnt[k]--; total--; }
+  const seq = [...Array(cnt.P).fill("P"), ...Array(cnt.A).fill("A"), ...Array(cnt.N).fill("N"), ...Array(cnt.C).fill("C"), ...Array(cnt.S).fill("S")];
+  while(seq.length < nb) seq.push("O");               // hours inside your week that stay open
+  // mornings first across your work days, then middays, then afternoons; read left to right, top to bottom
+  const slots = work.slice(0, nb).sort((a,b)=> (a%7)-(b%7) || a-b);
+  slots.forEach((i,n)=> w[i] = seq[n]);
+  return w;
+}
+function weekCounts(w){ const o = {}; w.forEach(v=>o[v]=(o[v]||0)+1); return o; }
+function weekByDay(w){
+  return DAYS.map((d,di)=>{
+    const biz = PARTS.map((p,pi)=>({p, v:w[pi*7+di]})).filter(x=>x.v!=="L");
+    return {d, line: biz.length ? biz.map(x=>`${WK[x.v].toLowerCase()} (${x.p.toLowerCase()})`).join(", ") : "life and family"};
+  });
+}
+
+/* ===== Screens ===== */
+const SCREENS = {
+  welcome(){
+    return `<section class="screen hero">
+      ${CONFIG.photoHero?`<figure class="hero-photo"><img src="${CONFIG.photoHero}" alt="Bunny Young at the beach"></figure>`:""}
+      <span class="eyebrow">${CONFIG.friendsgiving?"DEFY Friendsgiving":"DEFY"}</span>
+      <span class="script-big">Your Best Year Ever</span>
+      <h1>Build your 2027 business plan in about three minutes.</h1>
+      <p class="sub">Tell me what you want to make and how much you want to work. I'll show you three ways to get there, you pick the one that feels like you, and we'll build the plan together.</p>
+      <div class="hero-meta"><span><i class="dot"></i>${CONFIG.friendsgiving?9:8} quick questions</span><span><i class="dot"></i>Your plan at the end</span><span><i class="dot"></i>Yours to keep</span></div>
+      <div class="field" style="margin-top:6px"><label for="nm">What should I call you?</label><input class="input" id="nm" autocomplete="given-name" placeholder="First name" value="${esc(S.name)}"></div>
+    </section>`;
+  },
+  friends(){
+    return `<section class="screen">
+      <span class="eyebrow">Happy Friendsgiving</span>
+      <h2 class="q">Before we plan, let's celebrate you${hi()}.</h2>
+      <p class="sub">Three quick ones, just for tonight.</p>
+      <div class="field"><label for="invitedBy">Who invited you today?</label><input class="input" id="invitedBy" autocomplete="off" placeholder="Her name" value="${esc(S.invitedBy)}"></div>
+      <div class="field"><label for="proudSelf">What's one thing you're proud of yourself for?</label><textarea class="input" id="proudSelf" placeholder="This year I...">${esc(S.proudSelf)}</textarea></div>
+      <div class="field"><label for="proudHer">What's one thing you're proud of the woman who invited you for?</label><textarea class="input" id="proudHer" placeholder="I'm so proud of her for...">${esc(S.proudHer)}</textarea></div>
+    </section>`;
+  },
+  goal(){
+    const isOther = S.goal==="other";
+    return `<section class="screen">
+      <span class="eyebrow">Your money</span>
+      <h2 class="q">How much do you want to make in 2027${hi()}?</h2>
+      <p class="sub">Pick the number that makes you a little nervous in a good way.</p>
+      <div class="opts">${GOALS.map(g=>optBtn({v:g.v,t:g.t,s:"in revenue for the year"}, S.goal===g.v, false,"goal")).join("")}${otherBtn(isOther,false,"goal","A different number")}</div>
+      <div class="field other${isOther?" on":""}" id="goalOtherWrap"><label for="goalOther">Your number for the year</label><div class="money"><input class="input" id="goalOther" inputmode="numeric" placeholder="150,000" value="${esc(S.goalOther)}"></div></div>
+    </section>`;
+  },
+  hours(){
+    const isOther = S.hours==="other";
+    return `<section class="screen">
+      <span class="eyebrow">Your time</span>
+      <h2 class="q">How many hours a week do you <span class="script">want</span> to work?</h2>
+      <p class="sub">Not what you work now. What you want. Your life goes on the calendar first.</p>
+      <div class="opts">${HOURS.map(h=>optBtn({v:h.v,t:h.t,s:h.s}, S.hours===h.v, false,"hours")).join("")}${otherBtn(isOther,false,"hours","A different number")}</div>
+      <div class="field other${isOther?" on":""}"><label for="hoursOther">Hours a week</label><input class="input" id="hoursOther" inputmode="numeric" placeholder="15" value="${esc(S.hoursOther)}"></div>
+    </section>`;
+  },
+  work(){
+    const isOther = S.work==="other";
+    return `<section class="screen">
+      <span class="eyebrow">Your work</span>
+      <h2 class="q">What do you do?</h2>
+      <p class="sub">Pick the closest one. You can always write your own.</p>
+      <div class="opts">${WORK.map(w=>optBtn(w, S.work===w.v, false,"work")).join("")}${otherBtn(isOther,false,"work")}</div>
+      <div class="field other${isOther?" on":""}"><label for="workOther">In your words</label><input class="input" id="workOther" placeholder="I help..." value="${esc(S.workOther)}"></div>
+    </section>`;
+  },
+  coach(){
+    return `<section class="screen">
+      <span class="eyebrow">Your work</span>
+      <h2 class="q">Are you a coach?</h2>
+      <p class="sub">This tells me how to shape your offers.</p>
+      <div class="opts one">${COACH.map(c=>optBtn(c, S.coach===c.v, false,"coach")).join("")}</div>
+    </section>`;
+  },
+  offers(){
+    const o = offers(); const G = goalNum(), H = hoursNum();
+    const card = x => `<button type="button" class="offer" data-group="offer" data-v="${x.key}" aria-pressed="${S.offer===x.key}">
+      <span class="pick">My pick</span>
+      <div class="offer-h"><div><h3>${x.name}</h3><p>${x.blurb}</p></div><div class="price">${money(x.price)}<small>${x.priceNote}</small></div></div>
+      <div class="facts"><div class="fact"><span>You need</span><b>${x.count.toLocaleString("en-US")}</b></div><div class="fact"><span>Per month</span><b>${money(x.perMonth)}</b></div><div class="fact"><span>Weekly hours</span><b>${x.hrs}</b></div></div>
+    </button>`;
+    const isOther = S.offer==="other";
+    return `<section class="screen">
+      <span class="eyebrow">Three ways to ${money(G)}</span>
+      <h2 class="q">Here's how ${money(G)} fits into <span class="script">${H} hours</span> a week.</h2>
+      <p class="sub">Which one of these ideas aligns the most with you${hi()}? Tap it.</p>
+      ${CONFIG.photoCoffee?`<div class="bnote"><img src="${CONFIG.photoCoffee}" alt="Bunny Young"><div><b>A note from Bunny</b><p>I work about six hours a week across three days. Pick the offer that fits the life you want, not the one you think you should want.</p></div></div>`:""}
+      <div class="offers">${card(o.one)}${card(o.group)}${card(o.member)}</div>
+      <div class="opts one">${otherBtn(isOther,false,"offer","I have a different offer in mind")}</div>
+      <div class="other${isOther?" on":""}" style="gap:12px"><div class="field"><label for="offerOther">Your offer</label><input class="input" id="offerOther" placeholder="A VIP day, a retreat, a course..." value="${esc(S.offerOther)}"></div><div class="field"><label for="offerOtherPrice">Your price</label><div class="money"><input class="input" id="offerOtherPrice" inputmode="numeric" placeholder="5,000" value="${esc(S.offerOtherPrice)}"></div></div></div>
+      <p class="fine">"You need" is how many clients or members get you to your goal at that price. This is planning math to help you decide, not a promise of results.</p>
+    </section>`;
+  },
+  attract(){
+    const isOther = S.attract.includes("other");
+    return `<section class="screen">
+      <span class="eyebrow">Attract</span>
+      <h2 class="q">How do you want to meet your ideal clients?</h2>
+      <p class="sub">Choose up to three. The best plans repeat a few things on purpose.</p>
+      <div class="opts">${ATTRACT().map(a=>optBtn(a, S.attract.includes(a.v), true,"attract")).join("")}${otherBtn(isOther,true,"attract")}</div>
+      <div class="field other${isOther?" on":""}"><label for="attractOther">Your idea</label><input class="input" id="attractOther" placeholder="Host a local dinner every quarter" value="${esc(S.attractOther)}"></div>
+    </section>`;
+  },
+  nurture(){
+    const isOther = S.nurture.includes("other");
+    return `<section class="screen">
+      <span class="eyebrow">Nurture</span>
+      <h2 class="q">How do you want to stay in touch?</h2>
+      <p class="sub">Most people say yes on the fifth or sixth touch. Pick what you'll keep doing.</p>
+      <div class="opts">${NURTURE.map(a=>optBtn(a, S.nurture.includes(a.v), true,"nurture")).join("")}${otherBtn(isOther,true,"nurture")}</div>
+      <div class="field other${isOther?" on":""}"><label for="nurtureOther">Your idea</label><input class="input" id="nurtureOther" placeholder="A monthly voice note to my list" value="${esc(S.nurtureOther)}"></div>
+    </section>`;
+  },
+  convert(){
+    const isOther = S.convert==="other";
+    return `<section class="screen">
+      <span class="eyebrow">Convert</span>
+      <h2 class="q">How do you want people to say yes?</h2>
+      <p class="sub">Choose the one that fits your offer and your energy.</p>
+      <div class="opts">${CONVERT().map(a=>optBtn(a, S.convert===a.v, false,"convert")).join("")}${otherBtn(isOther,false,"convert")}</div>
+      <div class="field other${isOther?" on":""}"><label for="convertOther">Your way</label><input class="input" id="convertOther" placeholder="A short application, then a voice note" value="${esc(S.convertOther)}"></div>
+    </section>`;
+  },
+  plan(){
+    const d = planData(); const {c,G,H,del,at,nu,co,back,cv} = d;
+    const hr = v => v + (v===1?" hr":" hrs");
+    const pct = v => H? (v/H*100) : 0;
+    const name = firstName();
+    const q = QUOTES[0];
+    return `<section class="screen plan" id="planDoc">
+      <div class="plan-hero${CONFIG.photoYes?" has-photo":""}">
+        <div style="display:grid;gap:10px">
+          <span class="eyebrow">Your 2027 plan is ready</span>
+          <span class="script-big">${name? esc(name)+", look at you" : "Look at you"}</span>
+          <p class="sub">You decided what you want and built a plan to get there. That is the part most people never do. Here it is.</p>
+        </div>
+        ${CONFIG.photoYes?`<figure class="plan-photo"><img src="${CONFIG.photoYes}" alt="Bunny Young celebrating"></figure>`:""}
+      </div>
+      <div class="tiles">
+        <div class="tile"><span>Goal</span><b>${money(G)}</b><em>${money(G/12)} a month</em></div>
+        <div class="tile"><span>Your week</span><b>${H} hrs</b><em>and not one more</em></div>
+        <div class="tile"><span>Your offer</span><b>${c.price? money(c.price):"Set your price"}</b><em>${esc(c.name)}</em></div>
+        <div class="tile"><span>You need</span><b>${c.count? c.count.toLocaleString("en-US"):"?"}</b><em>${esc(c.countLbl)}</em></div>
+      </div>
+      <div class="card">
+        <h3>Your week, ${H} hours</h3>
+        <div class="week" aria-hidden="true"><i style="width:${pct(del)}%;background:var(--teal)"></i><i style="width:${pct(at)}%;background:var(--peach)"></i><i style="width:${pct(nu)}%;background:var(--mint)"></i><i style="width:${pct(co)}%;background:var(--coral)"></i><i style="width:${pct(back)}%;background:transparent"></i></div>
+        <div class="legend">
+          <div><i style="background:var(--teal)"></i>Serving your clients<b>${hr(del)}</b></div>
+          <div><i style="background:var(--peach)"></i>Attracting<b>${hr(at)}</b></div>
+          <div><i style="background:var(--mint)"></i>Nurturing<b>${hr(nu)}</b></div>
+          <div><i style="background:var(--coral)"></i>Inviting to buy<b>${hr(co)}</b></div>
+          ${back>0?`<div><i style="background:transparent;border:1.5px solid var(--muted)"></i>Time you get back<b>${hr(back)}</b></div>`:""}
+        </div>
+      </div>
+      <div class="card" id="wkCard">
+        <h3>Your ideal week</h3>
+        <p class="sub" style="font-size:15.5px">Life goes on the calendar first. Then the business fits into what's left. Each square is about two hours. Pick a color, then tap a square to make it yours.</p>
+        <div class="wk-legend" id="wkLegend"></div>
+        <div class="wkgrid" id="wkGrid" role="grid" aria-label="Your ideal week"></div>
+        <div class="wk-tools"><span class="note">Dashed squares are open time you get back.</span><button type="button" class="linkbtn" id="wkReset">Reset to my suggested week</button></div>
+        ${CONFIG.photoCoffee?`<div class="bnote"><img src="${CONFIG.photoCoffee}" alt="Bunny Young"><div><b>A note from Bunny</b><p>I put my life on the calendar first and built the business around it. I'm at Disneyland three times a week. You get to do the same.</p></div></div>`:""}
+      </div>
+      <div class="card">
+        <h3>Your first 90 days</h3>
+        <div class="months">
+          ${d.months.map(m=>`<div class="month"><span class="m">${m.m}</span><div><h4>${esc(m.title)}</h4><ul>${m.items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div>`).join("")}
+        </div>
+      </div>
+      ${S.proudSelf.trim()?`<div class="card proud"><h3>Tonight you celebrated</h3><p><b>You're proud of yourself for</b>${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p><b>You're proud of ${esc(S.invitedBy.trim()||"her")} for</b>${esc(S.proudHer.trim())}</p>`:""}</div>`:""}
+      <blockquote class="pq" style="margin:0"><q>${esc(q.q)}</q><cite>${esc(q.c)}</cite></blockquote>
+      <div class="card">
+        <h3>Keep your plan</h3>
+        <form class="send" id="sendForm" novalidate>
+          <input class="input" id="em" type="email" autocomplete="email" placeholder="you@email.com" value="${esc(S.email)}" aria-label="Email address">
+          <button class="btn btn-coral" type="submit">Email my plan</button>
+        </form>
+        <p class="note" id="sendNote">I'll send this plan to your inbox.</p>
+        <div class="row"><button class="btn btn-ghost" type="button" id="dlBtn">Download my plan (PDF)</button><button class="btn btn-ghost" type="button" id="cpBtn">Copy plan</button></div>
+      </div>
+      <div class="cta">
+        ${CONFIG.photoPlan?`<img class="cta-photo" src="${CONFIG.photoPlan}" alt="Bunny Young">`:""}
+        <span class="script">Want help building it?</span>
+        <p>This is the exact work we do inside DEFY. Book a call with Bunny and bring this plan with you.</p>
+        <div class="row"><a class="btn btn-teal" href="${CONFIG.bookUrl}" target="_blank" rel="noopener">Book my DEFY call</a></div>
+        <p class="alt">Rather start with a few questions? <a href="${CONFIG.applyUrl}" target="_blank" rel="noopener">Apply for DEFY</a></p>
+      </div>
+      <p class="fine">These numbers are planning math based on your answers. They are not a promise of income or results.</p>
+      <button class="back restart" type="button" id="restartBtn">Start a new plan</button>
+    </section>`;
+  }
+};
+
+/* ===== Validation ===== */
+function valid(){
+  switch(STEPS[step]){
+    case "welcome": return true;
+    case "friends": return S.invitedBy.trim().length>1 && S.proudSelf.trim().length>1 && S.proudHer.trim().length>1;
+    case "goal": return S.goal && (S.goal!=="other" || goalNum()>=1000);
+    case "hours": return S.hours && (S.hours!=="other" || (hoursNum()>0 && hoursNum()<=80));
+    case "work": return S.work && (S.work!=="other" || S.workOther.trim().length>1);
+    case "coach": return !!S.coach;
+    case "offers": return S.offer && (S.offer!=="other" || (S.offerOther.trim().length>1 && parseFloat(String(S.offerOtherPrice).replace(/[^0-9.]/g,""))>0));
+    case "attract": return S.attract.length>0 && (!S.attract.includes("other") || S.attractOther.trim().length>1);
+    case "nurture": return S.nurture.length>0 && (!S.nurture.includes("other") || S.nurtureOther.trim().length>1);
+    case "convert": return S.convert && (S.convert!=="other" || S.convertOther.trim().length>1);
+    default: return true;
+  }
+}
+const HINTS = {friends:"Answer all three", goal:"Pick one", hours:"Pick one", work:"Pick one", coach:"Pick one", offers:"Tap the one that fits", attract:"Up to three", nurture:"Pick as many as you like", convert:"Pick one"};
+
+/* ===== Progress (weighted so it runs ahead) ===== */
+function progress(){
+  const f = step/(STEPS.length-1);
+  const shown = step===STEPS.length-1 ? 100 : Math.round(8 + 92*(1-Math.pow(1-f,1.9)));
+  $("#bar").style.width = shown+"%";
+  $("#pct").textContent = shown+"%";
+  $("#barwrap").setAttribute("aria-valuenow", shown);
+}
+
+/* ===== Render ===== */
+function render(){
+  main.innerHTML = SCREENS[STEPS[step]]();
+  progress();
+  const isPlan = STEPS[step]==="plan";
+  $("#actions").hidden = isPlan;
+  $("#backBtn").style.visibility = step===0 ? "hidden" : "visible";
+  $("#nextLbl").textContent = step===0 ? "Let's build it" : (STEPS[step]==="convert" ? "Build my plan" : "Next");
+  $("#hint").textContent = HINTS[STEPS[step]] || "";
+  bind();
+  updateNext();
+  window.scrollTo({top:0, behavior: reduce? "auto":"smooth"});
+  if(isPlan) planReady();
+}
+function updateNext(){ $("#nextBtn").disabled = !valid(); }
+
+function bind(){
+  main.querySelectorAll("[data-group]").forEach(b => b.addEventListener("click", () => choose(b.dataset.group, b.dataset.v)));
+  const map = {nm:"name", invitedBy:"invitedBy", proudSelf:"proudSelf", proudHer:"proudHer", goalOther:"goalOther", hoursOther:"hoursOther", workOther:"workOther", offerOther:"offerOther", offerOtherPrice:"offerOtherPrice", attractOther:"attractOther", nurtureOther:"nurtureOther", convertOther:"convertOther"};
+  Object.entries(map).forEach(([id,key]) => {
+    const el = document.getElementById(id); if(!el) return;
+    el.addEventListener("input", () => { S[key] = el.value; updateNext(); });
+    el.addEventListener("keydown", e => { if(e.key==="Enter" && el.tagName!=="TEXTAREA" && !$("#nextBtn").disabled){ e.preventDefault(); next(); } });
+  });
+  if(STEPS[step]==="welcome"){ const n = document.getElementById("nm"); if(n && matchMedia("(min-width:800px)").matches) n.focus({preventScroll:true}); }
+}
+
+function choose(group, raw){
+  const num = v => (isNaN(Number(v)) ? v : Number(v));
+  const v = num(raw);
+  if(["attract","nurture"].includes(group)){
+    const arr = S[group];
+    const i = arr.indexOf(raw);
+    if(i>=0) arr.splice(i,1);
+    else {
+      if(group==="attract" && arr.length>=3){ toast("Three is plenty. Tap one to swap it out."); return; }
+      arr.push(raw);
+    }
+  } else if(group==="offer"){
+    S.offer = raw;
+  } else {
+    S[group] = v;
+  }
+  // update pressed states without re-render to keep focus
+  main.querySelectorAll(`[data-group="${group}"]`).forEach(b => {
+    const val = b.dataset.v;
+    const on = Array.isArray(S[group]) ? S[group].includes(val) : String(S[group])===val;
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  const other = main.querySelector(".other");
+  if(other){
+    const isOther = Array.isArray(S[group]) ? S[group].includes("other") : S[group]==="other";
+    other.classList.toggle("on", isOther);
+    if(isOther){ const inp = other.querySelector("input"); if(inp && raw==="other") setTimeout(()=>inp.focus(),50); }
+  }
+  if(group==="offer" && raw!=="other" && !celebratedOffers){ celebratedOffers = true; celebrate(false); }
+  updateNext();
+}
+
+/* ===== Next with quote ===== */
+function next(){
+  if(!valid()) return;
+  if(step===0 || reduce){ go(step+1); return; }
+  const q = QUOTES[qi++ % QUOTES.length];
+  $("#lqText").textContent = q.q; $("#lqCite").textContent = q.c;
+  const lp = $("#lqPhoto"); if(CONFIG.photoFace){ lp.src = CONFIG.photoFace; lp.alt = ""; lp.hidden = !/Bunny/.test(q.c); }
+  $("#loaderLbl").textContent = STEPS[step+1]==="plan" ? "Building your plan" : (STEPS[step+1]==="offers" ? "Running your numbers" : LOADER_LABELS[qi % LOADER_LABELS.length]);
+  const L = $("#loader"); L.classList.add("on"); L.setAttribute("aria-hidden","false");
+  const wait = STEPS[step+1]==="plan" ? 2600 : 1700;
+  setTimeout(() => { go(step+1); L.classList.remove("on"); L.setAttribute("aria-hidden","true"); }, wait);
+}
+function go(n){ step = Math.max(0, Math.min(STEPS.length-1, n)); render(); }
+$("#nextBtn").addEventListener("click", next);
+$("#backBtn").addEventListener("click", () => go(step-1));
+
+/* ===== Celebration ===== */
+function celebrate(big){
+  if(reduce) return;
+  const colors = ["#F9AD84","#88CCC6","#D9E9E4","#F3F3EE","#E46A3D"];
+  if(typeof confetti === "function"){
+    if(big){
+      const end = Date.now()+1600;
+      (function frame(){ confetti({particleCount:5,angle:60,spread:70,origin:{x:0,y:.7},colors}); confetti({particleCount:5,angle:120,spread:70,origin:{x:1,y:.7},colors}); if(Date.now()<end) requestAnimationFrame(frame); })();
+      setTimeout(()=>confetti({particleCount:160,spread:100,origin:{y:.45},colors,scalar:1.1}),300);
+    } else {
+      confetti({particleCount:90,spread:75,origin:{y:.6},colors});
+    }
+  }
+  const fx = $("#fx"); const n = big? 7 : 3;
+  for(let i=0;i<n;i++){
+    const u = document.createElement("span"); u.className="uni"; u.textContent="🦄";
+    u.style.left = (8 + Math.random()*84)+"%";
+    u.style.setProperty("--dx", (Math.random()*80-40)+"px");
+    u.style.animationDelay = (i*0.22)+"s";
+    u.style.fontSize = (34 + Math.random()*22)+"px";
+    fx.appendChild(u);
+    setTimeout(()=>u.remove(), 4400 + i*220);
+  }
+}
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove("on"), 2600); }
+
+/* ===== Plan as text ===== */
+function planText(){
+  const d = planData(); const {c,G,H} = d;
+  const lines = [
+    `${firstName()? firstName()+"'s ":"My "}2027 Plan (built at ${CONFIG.source})`,
+    "",
+    `Goal: ${money(G)} for the year (${money(G/12)} a month)`,
+    `Hours: ${H} a week`,
+    `What I do: ${workLabel()}`,
+    `Offer: ${c.name}${c.price? ", "+money(c.price)+" "+c.priceNote : ""}`,
+    c.count? `I need: ${c.count.toLocaleString("en-US")} ${c.countLbl}` : null,
+    "",
+    `Attract: ${d.attract.join("; ")}`,
+    `Nurture: ${d.nurture.join("; ")}`,
+    `Convert: ${d.cv}`,
+    "",
+    "MY IDEAL WEEK",
+    ...weekByDay(d.week).map(x=>`${x.d}: ${x.line}`),
+    "",
+    "MY FIRST 90 DAYS",
+    ...d.months.flatMap(m=>[`${m.m}: ${m.title}`, ...m.items.map(i=>"  - "+i)]),
+    S.proudSelf.trim()? "" : null,
+    S.proudSelf.trim()? `I'm proud of myself for: ${S.proudSelf.trim()}` : null,
+    S.proudHer.trim()? `I'm proud of ${S.invitedBy.trim()||"the woman who invited me"} for: ${S.proudHer.trim()}` : null,
+    "",
+    `Book a DEFY call: ${CONFIG.bookUrl}`,
+    "These numbers are planning math, not a promise of income or results."
+  ];
+  return lines.filter(l=>l!==null).filter((l,i,arr)=> !(l==="" && arr[i-1]==="")).join("\n");
+}
+function payload(event){
+  const c = chosen();
+  return {
+    event, id:S.id, source:CONFIG.source, submittedAt:new Date().toISOString(),
+    name:S.name.trim(), email:S.email.trim(),
+    incomeGoal:goalNum(), hoursPerWeek:hoursNum(), work:workLabel(),
+    coach:COACH.find(x=>x.v===S.coach)?.t || "",
+    offer:c.name, offerPrice:c.price, offerPriceNote:c.priceNote, clientsNeeded:c.count,
+    attract:S.attract.map(LABEL.attract).join("; "), nurture:S.nurture.map(LABEL.nurture).join("; "), convert:LABEL.convert(S.convert),
+    invitedBy:S.invitedBy.trim(), proudSelf:S.proudSelf.trim(), proudHer:S.proudHer.trim(),
+    planText:planText(),
+    plan:planEmailData()
+  };
+}
+function planEmailData(){
+  const d = planData();
+  return {
+    first:firstName(), goal:d.G, hours:d.H, offer:d.c.name, price:d.c.price||0, priceNote:d.c.priceNote||"",
+    count:d.c.count||0, countLbl:d.c.countLbl||"",
+    split:{serving:d.del, attracting:d.at, nurturing:d.nu, inviting:d.co, back:d.back},
+    week:d.week.join(""), months:d.months,
+    attract:d.attract, nurture:d.nurture, convert:d.cv,
+    invitedBy:S.invitedBy.trim(), proudSelf:S.proudSelf.trim(), proudHer:S.proudHer.trim(),
+    quote:QUOTES[0]
+  };
+}
+async function postLead(event){
+  if(!CONFIG.endpoint) return false;
+  try{
+    await fetch(CONFIG.endpoint, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload(event))});
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ===== Plan screen actions ===== */
+const inPreview = /claude|anthropic/i.test(location.hostname) || location.protocol==="about:" || location.protocol==="blob:";
+function drawWeek(){
+  const g = $("#wkGrid"), L = $("#wkLegend"); if(!g) return;
+  const w = S.week, n = weekCounts(w);
+  L.innerHTML = WK_BRUSH.map(k=>`<button type="button" data-brush="${k}" aria-pressed="${brush===k}"><i class="c-${k}">${k}</i><span>${WK[k]}</span><em>${n[k]||0}</em></button>`).join("");
+  g.innerHTML = `<span></span>${DAYS.map(d=>`<span class="h">${d[0]}</span>`).join("")}` +
+    PARTS.map((p,pi)=>`<span class="rl">${p}</span>${DAYS.map((d,di)=>{const v=w[pi*7+di]; const lit = v && v!=="O";
+      return `<button type="button" class="cell${lit?" c-"+v:""}" ${lit?`data-c="${v}"`:""} data-i="${pi*7+di}" aria-label="${DAYS_LONG[di]} ${p}: ${WK[v]||"open"}">${lit?v:""}</button>`}).join("")}`).join("");
+  L.querySelectorAll("[data-brush]").forEach(b=>b.addEventListener("click",()=>{ brush=b.dataset.brush; drawWeek(); }));
+  g.querySelectorAll("[data-i]").forEach(b=>b.addEventListener("click",()=>{
+    const i = +b.dataset.i; S.week[i] = S.week[i]===brush ? "O" : brush; S.weekEdited = true; drawWeek();
+  }));
+}
+function loadScript(src){ return new Promise((ok,no)=>{ const t=document.createElement("script"); t.src=src; t.onload=ok; t.onerror=no; document.head.appendChild(t); }); }
+function planDocHTML(){
+  const d = planData(); const {c,G,H} = d; const name = firstName();
+  const col = {L:"#273945",C:"#88CCC6",A:"#F9AD84",N:"#D9E9E4",S:"#D85A30",P:"#FFFFFF",O:"#FFFFFF"};
+  const ink = {L:"#F3F3EE",C:"#14262C",A:"#3A1E12",N:"#273945",S:"#FFFFFF",P:"#273945",O:"#273945"};
+  const cell = v => `<td style="background:${col[v]};color:${ink[v]};border:${v==="O"?"1.5px dashed #9FB0B6":v==="P"?"1.5px solid #C9D4D7":"0"};height:30px;border-radius:7px;text-align:center;font:800 11px Montserrat,sans-serif">${v==="O"?"":v}</td>`;
+  const tile = (k,v,e) => `<div style="background:#fff;border:1px solid #E1E8E5;border-radius:14px;padding:12px 14px"><div style="font:700 9.5px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#5A6D77">${k}</div><div style="font:800 22px Montserrat,sans-serif;color:#273945;margin-top:4px">${v}</div><div style="font:500 11.5px 'DM Sans',sans-serif;color:#5A6D77;margin-top:2px">${e}</div></div>`;
+  const h3 = t => `<div style="font:700 11.5px Montserrat,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#2C7A73;margin:0 0 10px">${t}</div>`;
+  const bar = [["Serving your clients",d.del,"#88CCC6"],["Attracting",d.at,"#F9AD84"],["Nurturing",d.nu,"#D9E9E4"],["Inviting to buy",d.co,"#D85A30"],["Time you get back",d.back,"#FFFFFF"]].filter(x=>x[1]>0);
+  const hr = v => v + (v===1?" hr":" hrs");
+  const sec = (inner, extra="") => `<div class="pd-avoid" style="background:#fff;border:1px solid #E1E8E5;border-radius:18px;padding:18px 20px;margin-top:14px;${extra}">${inner}</div>`;
+  return `<div style="width:720px;background:#F3F3EE;color:#273945;font:400 13px/1.5 'DM Sans',sans-serif;padding:0">
+    <div class="pd-avoid" style="background:#0E1A22;border-radius:22px;padding:24px 26px;display:flex;align-items:center;gap:20px;color:#F3F3EE">
+      <div style="flex:1;min-width:0">
+        <div style="display:inline-block;border:1.5px solid rgba(243,243,238,.75);padding:3px 8px 2px;font:800 14px Montserrat,sans-serif;letter-spacing:.14em"><span style="color:#88CCC6">DE</span>FY</div>
+        <div style="font:400 50px/1 Allura,cursive;color:#F9AD84;margin-top:12px">${name? esc(name)+"'s 2027 plan" : "My 2027 plan"}</div>
+        <div style="font:500 13px 'DM Sans',sans-serif;color:#C9D4D7;margin-top:8px">Built at ${esc(CONFIG.source)}. Life on the calendar first, then the business.</div>
+      </div>
+      ${CONFIG.photoYes?`<img src="${CONFIG.photoYes}" style="width:118px;height:118px;border-radius:50%;object-fit:cover;object-position:40% 20%;border:3px solid #F9AD84;flex:none">`:""}
+    </div>
+    <div class="pd-avoid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px">
+      ${tile("Goal",money(G),money(G/12)+" a month")}${tile("Your week",H+" hrs","and not one more")}${tile("Your offer",c.price?money(c.price):"Your price",esc(c.name))}${tile("You need",c.count?c.count.toLocaleString("en-US"):"?",esc(c.countLbl))}
+    </div>
+    ${sec(`${h3(`Your week, ${H} hours`)}
+      <div style="display:flex;height:12px;border-radius:999px;overflow:hidden;background:#E6F0EC">${bar.map(x=>`<i style="display:block;width:${H?x[1]/H*100:0}%;background:${x[2]}"></i>`).join("")}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;margin-top:12px">${bar.map(x=>`<div style="display:flex;align-items:center;gap:8px"><i style="width:10px;height:10px;border-radius:3px;background:${x[2]};border:${x[2]==="#FFFFFF"?"1px solid #9FB0B6":"0"}"></i><span>${x[0]}</span><b style="margin-left:auto;font-family:Montserrat,sans-serif">${hr(x[1])}</b></div>`).join("")}</div>`)}
+    ${sec(`${h3("Your ideal week")}
+      <table style="width:100%;border-collapse:separate;border-spacing:4px;table-layout:fixed">
+        <tr><td style="width:70px"></td>${DAYS.map(x=>`<td style="text-align:center;font:800 10.5px Montserrat,sans-serif;letter-spacing:.1em;color:#5A6D77">${x.toUpperCase()}</td>`).join("")}</tr>
+        ${PARTS.map((p,pi)=>`<tr><td style="font:700 9.5px Montserrat,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5A6D77">${p}</td>${DAYS.map((x,di)=>cell(d.week[pi*7+di])).join("")}</tr>`).join("")}
+      </table>
+      <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:11.5px">${["L","C","A","N","S","P","O"].map(k=>`<span style="display:inline-flex;align-items:center;gap:6px"><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${col[k]};border:${k==="O"?"1px dashed #9FB0B6":k==="P"?"1px solid #C9D4D7":"0"}"></i>${k==="O"?"":k+" "}${WK[k]}</span>`).join("")}</div>`)}
+    ${sec(`${h3("Your first 90 days")}
+      ${d.months.map(m=>`<div style="display:grid;grid-template-columns:80px 1fr;gap:12px;padding:8px 0;border-top:1px solid #EEF2F0"><div style="font:800 11px Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#B54F25;padding-top:2px">${m.m}</div><div><div style="font:700 14.5px Montserrat,sans-serif;margin-bottom:4px">${esc(m.title)}</div><ul style="margin:0;padding-left:16px">${m.items.map(i=>`<li style="margin:2px 0">${esc(i)}</li>`).join("")}</ul></div></div>`).join("")}`)}
+    ${S.proudSelf.trim()? sec(`${h3("Tonight you celebrated")}<p style="margin:0 0 8px"><b style="font-family:Montserrat,sans-serif">You're proud of yourself for:</b> ${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p style="margin:0"><b style="font-family:Montserrat,sans-serif">You're proud of ${esc(S.invitedBy.trim()||"her")} for:</b> ${esc(S.proudHer.trim())}</p>`:""}`) : ""}
+    <div class="pd-avoid" style="border-left:4px solid #88CCC6;padding:4px 0 4px 18px;margin:18px 0 0"><div style="font:italic 500 21px/1.3 'Cormorant Garamond',Georgia,serif">${esc(QUOTES[0].q)}</div><div style="font:700 10.5px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#B54F25;margin-top:6px">${esc(QUOTES[0].c)}</div></div>
+    <div class="pd-avoid" style="background:#0E1A22;color:#F3F3EE;border-radius:22px;padding:22px 24px;margin-top:16px;display:flex;gap:18px;align-items:center">
+      ${CONFIG.photoPlan?`<img src="${CONFIG.photoPlan}" style="width:84px;height:84px;border-radius:50%;object-fit:cover;object-position:50% 18%;border:3px solid #F9AD84;flex:none">`:""}
+      <div style="flex:1"><div style="font:400 34px/1 Allura,cursive;color:#F9AD84">Want help building it?</div><div style="color:#C9D4D7;margin:6px 0 12px">This is the exact work we do inside DEFY. Bring this plan to your call.</div>
+      <a href="${CONFIG.bookUrl}" style="display:inline-block;background:#88CCC6;color:#1B2C36;text-decoration:none;font:800 12px Montserrat,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:11px 20px;border-radius:999px">Book my DEFY call</a></div>
+    </div>
+    <div style="font-size:10.5px;color:#5A6D77;margin-top:12px;text-align:center">These numbers are planning math based on your answers. They are not a promise of income or results. 🤍 Bunny + Guinness</div>
+  </div>`;
+}
+async function downloadPlan(){
+  const fname = (firstName()||"My")+"-2027-Plan";
+  toast("Making your PDF...");
+  try{
+    if(!window.html2pdf) await loadScript("../html2pdf.bundle.min.js");
+    await html2pdf().set({
+      margin:[0.35,0.35,0.35,0.35], filename:fname+".pdf", enableLinks:true,
+      image:{type:"jpeg", quality:0.95},
+      html2canvas:{scale:2, useCORS:true, backgroundColor:"#F3F3EE", logging:false},
+      jsPDF:{unit:"in", format:"letter", orientation:"portrait"},
+      pagebreak:{mode:["css","legacy"], avoid:[".pd-avoid"]}
+    }).from(planDocHTML()).save();
+    toast("Your plan is downloading");
+  }catch(e){
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${fname}</title><base href="${location.href}"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=DM+Sans:wght@400;500;700&family=Allura&family=Cormorant+Garamond:ital,wght@1,500&display=swap"></head><body style="margin:0;background:#F3F3EE;display:flex;justify-content:center;padding:24px">${planDocHTML()}</body></html>`;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([html],{type:"text/html"}));
+    a.download = fname+".html"; document.body.appendChild(a); a.click(); a.remove();
+    toast("Your plan is downloading");
+  }
+}
+function planReady(){
+  setTimeout(()=>celebrate(true), 150);
+  drawWeek();
+  $("#wkReset").addEventListener("click",()=>{ S.weekEdited=false; S.week=null; planData(); drawWeek(); toast("Back to your suggested week"); });
+  if(!S.completed){ S.completed = true; postLead("completed"); }
+  const dl = $("#dlBtn"); if(inPreview) dl.hidden = true;
+  dl.addEventListener("click", downloadPlan);
+  $("#cpBtn").addEventListener("click", () => {
+    const txt = planText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(()=>toast("Copied. Paste it anywhere you keep notes."), ()=>fallbackCopy(txt));
+    } else fallbackCopy(txt);
+  });
+  $("#sendForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const em = $("#em").value.trim(); const note = $("#sendNote");
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)){ note.className="note"; note.textContent="That email doesn't look right. Check it and try again."; $("#em").focus(); return; }
+    S.email = em;
+    if(!CONFIG.endpoint){ note.className="note"; note.textContent="Email delivery turns on once this page is live. For now, tap Copy plan to keep it."; return; }
+    note.textContent="Sending...";
+    const ok = await postLead("email");
+    note.className = ok? "note ok":"note";
+    note.textContent = ok? `On its way to ${em}. Check your inbox in a few minutes.` : "That didn't go through. Tap Copy plan to keep it, then try again.";
+    if(ok) celebrate(false);
+  });
+  $("#restartBtn").addEventListener("click", () => {
+    Object.assign(S,{id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())), goal:null,goalOther:"",hours:null,hoursOther:"",work:null,workOther:"",coach:null,offer:null,offerOther:"",offerOtherPrice:"",attract:[],attractOther:"",nurture:[],nurtureOther:"",convert:null,convertOther:"",email:"",completed:false,week:null,weekEdited:false});
+    celebratedOffers=false; go(0);
+  });
+}
+function fallbackCopy(txt){
+  const ta = document.createElement("textarea"); ta.value = txt; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select();
+  let ok=false; try{ ok = document.execCommand("copy"); }catch(e){}
+  ta.remove(); toast(ok? "Copied. Paste it anywhere you keep notes." : "Press and hold to copy your plan.");
+}
+
+render();
+</script>
+
+</body>
+</html>

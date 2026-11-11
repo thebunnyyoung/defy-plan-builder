@@ -328,7 +328,7 @@ const S = {
   invitedBy:"", proudSelf:"", proudHer:"",
   email:"", completed:false, week:null, weekEdited:false
 };
-const STEPS = ["welcome", ...(CONFIG.friendsgiving? ["friends"]:[]), "goal","hours","work","coach","offers","attract","nurture","convert","plan"];
+const STEPS = ["welcome", ...(CONFIG.friendsgiving? ["friends"]:[]), "goal","hours","work","coach","offers","attract","nurture","convert","proud","plan"];
 let step = 0, qi = 0, celebratedOffers = false, brush = "L";
 
 const $ = s => document.querySelector(s);
@@ -499,18 +499,25 @@ const SCREENS = {
       <span class="script-big">Your Best Year Ever</span>
       <h1>Build your 2027 business plan in about three minutes.</h1>
       <p class="sub">Tell me what you want to make and how much you want to work. I'll show you three ways to get there, you pick the one that feels like you, and we'll build the plan together.</p>
-      <div class="hero-meta"><span><i class="dot"></i>${CONFIG.friendsgiving?9:8} quick questions</span><span><i class="dot"></i>Your plan at the end</span><span><i class="dot"></i>Yours to keep</span></div>
+      <div class="hero-meta"><span><i class="dot"></i>${CONFIG.friendsgiving?10:9} quick questions</span><span><i class="dot"></i>Your plan at the end</span><span><i class="dot"></i>Yours to keep</span></div>
       <div class="field" style="margin-top:6px"><label for="nm">What should I call you?</label><input class="input" id="nm" autocomplete="given-name" placeholder="First name" value="${esc(S.name)}"></div>
     </section>`;
   },
   friends(){
     return `<section class="screen">
       <span class="eyebrow">Happy Friendsgiving</span>
-      <h2 class="q">Before we plan, let's celebrate you${hi()}.</h2>
-      <p class="sub">Three quick ones, just for tonight.</p>
+      <h2 class="q">First, let's celebrate the woman who brought you here${hi()}.</h2>
+      <p class="sub">Two quick ones, just for tonight.</p>
       <div class="field"><label for="invitedBy">Who invited you today?</label><input class="input" id="invitedBy" autocomplete="off" placeholder="Her name" value="${esc(S.invitedBy)}"></div>
-      <div class="field"><label for="proudSelf">What's one thing you're proud of yourself for?</label><textarea class="input" id="proudSelf" placeholder="This year I...">${esc(S.proudSelf)}</textarea></div>
-      <div class="field"><label for="proudHer">What's one thing you're proud of the woman who invited you for?</label><textarea class="input" id="proudHer" placeholder="I'm so proud of her for...">${esc(S.proudHer)}</textarea></div>
+      <div class="field"><label for="proudHer">What's one thing you're proud of her for?</label><textarea class="input" id="proudHer" placeholder="I'm so proud of her for...">${esc(S.proudHer)}</textarea></div>
+    </section>`;
+  },
+  proud(){
+    return `<section class="screen">
+      <span class="eyebrow">One more before your plan</span>
+      <h2 class="q">What's one thing you're proud of yourself for this year${hi()}?</h2>
+      <p class="sub">Your 2027 plan builds on everything you've already done. Write it down so you see it right next to your plan.</p>
+      <div class="field"><label for="proudSelf">I'm proud of myself for...</label><textarea class="input" id="proudSelf" placeholder="This year I...">${esc(S.proudSelf)}</textarea></div>
     </section>`;
   },
   goal(){
@@ -646,7 +653,7 @@ const SCREENS = {
           ${d.months.map(m=>`<div class="month"><span class="m">${m.m}</span><div><h4>${esc(m.title)}</h4><ul>${m.items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div></div>`).join("")}
         </div>
       </div>
-      ${S.proudSelf.trim()?`<div class="card proud"><h3>Tonight you celebrated</h3><p><b>You're proud of yourself for</b>${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p><b>You're proud of ${esc(S.invitedBy.trim()||"her")} for</b>${esc(S.proudHer.trim())}</p>`:""}</div>`:""}
+      ${S.proudSelf.trim()?`<div class="card proud"><h3>${CONFIG.friendsgiving?"Tonight you celebrated":"What you're proud of"}</h3><p><b>You're proud of yourself for</b>${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p><b>You're proud of ${esc(S.invitedBy.trim()||"her")} for</b>${esc(S.proudHer.trim())}</p>`:""}</div>`:""}
       <blockquote class="pq" style="margin:0"><q>${esc(q.q)}</q><cite>${esc(q.c)}</cite></blockquote>
       <div class="card">
         <h3>Keep your plan</h3>
@@ -674,7 +681,8 @@ const SCREENS = {
 function valid(){
   switch(STEPS[step]){
     case "welcome": return true;
-    case "friends": return S.invitedBy.trim().length>1 && S.proudSelf.trim().length>1 && S.proudHer.trim().length>1;
+    case "friends": return S.invitedBy.trim().length>1 && S.proudHer.trim().length>1;
+    case "proud": return S.proudSelf.trim().length>1;
     case "goal": return S.goal && (S.goal!=="other" || goalNum()>=1000);
     case "hours": return S.hours && (S.hours!=="other" || (hoursNum()>0 && hoursNum()<=80));
     case "work": return S.work && (S.work!=="other" || S.workOther.trim().length>1);
@@ -686,7 +694,7 @@ function valid(){
     default: return true;
   }
 }
-const HINTS = {friends:"Answer all three", goal:"Pick one", hours:"Pick one", work:"Pick one", coach:"Pick one", offers:"Tap the one that fits", attract:"Up to three", nurture:"Pick as many as you like", convert:"Pick one"};
+const HINTS = {friends:"Answer both", proud:"Just a sentence or two", goal:"Pick one", hours:"Pick one", work:"Pick one", coach:"Pick one", offers:"Tap the one that fits", attract:"Up to three", nurture:"Pick as many as you like", convert:"Pick one"};
 
 /* ===== Progress (weighted so it runs ahead) ===== */
 function progress(){
@@ -704,7 +712,7 @@ function render(){
   const isPlan = STEPS[step]==="plan";
   $("#actions").hidden = isPlan;
   $("#backBtn").style.visibility = step===0 ? "hidden" : "visible";
-  $("#nextLbl").textContent = step===0 ? "Let's build it" : (STEPS[step]==="convert" ? "Build my plan" : "Next");
+  $("#nextLbl").textContent = step===0 ? "Let's build it" : (STEPS[step+1]==="plan" ? "Build my plan" : "Next");
   $("#hint").textContent = HINTS[STEPS[step]] || "";
   bind();
   updateNext();
@@ -910,7 +918,7 @@ function planDocHTML(){
       <div style="display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:11.5px">${["L","C","A","N","S","P","O"].map(k=>`<span style="display:inline-flex;align-items:center;gap:6px"><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${col[k]};border:${k==="O"?"1px dashed #9FB0B6":k==="P"?"1px solid #C9D4D7":"0"}"></i>${k==="O"?"":k+" "}${WK[k]}</span>`).join("")}</div>`)}
     ${sec(`${h3("Your first 90 days")}
       ${d.months.map(m=>`<div style="display:grid;grid-template-columns:80px 1fr;gap:12px;padding:8px 0;border-top:1px solid #EEF2F0"><div style="font:800 11px Montserrat,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#B54F25;padding-top:2px">${m.m}</div><div><div style="font:700 14.5px Montserrat,sans-serif;margin-bottom:4px">${esc(m.title)}</div><ul style="margin:0;padding-left:16px">${m.items.map(i=>`<li style="margin:2px 0">${esc(i)}</li>`).join("")}</ul></div></div>`).join("")}`)}
-    ${S.proudSelf.trim()? sec(`${h3("Tonight you celebrated")}<p style="margin:0 0 8px"><b style="font-family:Montserrat,sans-serif">You're proud of yourself for:</b> ${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p style="margin:0"><b style="font-family:Montserrat,sans-serif">You're proud of ${esc(S.invitedBy.trim()||"her")} for:</b> ${esc(S.proudHer.trim())}</p>`:""}`) : ""}
+    ${S.proudSelf.trim()? sec(`${h3(CONFIG.friendsgiving?"Tonight you celebrated":"What you're proud of")}<p style="margin:0 0 8px"><b style="font-family:Montserrat,sans-serif">You're proud of yourself for:</b> ${esc(S.proudSelf.trim())}</p>${S.proudHer.trim()?`<p style="margin:0"><b style="font-family:Montserrat,sans-serif">You're proud of ${esc(S.invitedBy.trim()||"her")} for:</b> ${esc(S.proudHer.trim())}</p>`:""}`) : ""}
     <div class="pd-avoid" style="border-left:4px solid #88CCC6;padding:4px 0 4px 18px;margin:18px 0 0"><div style="font:italic 500 21px/1.3 'Cormorant Garamond',Georgia,serif">${esc(QUOTES[0].q)}</div><div style="font:700 10.5px Montserrat,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#B54F25;margin-top:6px">${esc(QUOTES[0].c)}</div></div>
     <div class="pd-avoid" style="background:#0E1A22;color:#F3F3EE;border-radius:22px;padding:22px 24px;margin-top:16px;display:flex;gap:18px;align-items:center">
       ${CONFIG.photoPlan?`<img src="${CONFIG.photoPlan}" style="width:84px;height:84px;border-radius:50%;object-fit:cover;object-position:50% 18%;border:3px solid #F9AD84;flex:none">`:""}
